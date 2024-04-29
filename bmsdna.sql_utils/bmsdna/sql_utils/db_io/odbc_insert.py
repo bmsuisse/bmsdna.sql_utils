@@ -2,7 +2,7 @@ import pyodbc
 import pyarrow as pa
 from typing import Union, Tuple
 
-from bmsdna.sql_utils.lake.types import FieldWithType
+from bmsdna.sql_utils.lake.types import FieldWithType, SQLField
 from ..query import sql_quote_name
 
 MINIMAL_JSON_COMPATIBILITY_LEVEL = 130
@@ -13,7 +13,7 @@ async def pyodbc_insert_into_table(
     reader: pa.RecordBatchReader,
     table_name: Union[Tuple[str, str], str],
     connection: pyodbc.Connection,
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     supports_json_insert: bool | None = None,
 ):
     if supports_json_insert is None:

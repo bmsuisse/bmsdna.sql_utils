@@ -1,10 +1,11 @@
 from bmsdna.sql_utils.db_io.source import WriteInfo
 from bmsdna.sql_utils.lake.lake_meta import get_metadata
-from bmsdna.sql_utils.lake.types import FieldWithType, LakeMetadata
+from bmsdna.sql_utils.lake.types import FieldWithType, LakeMetadata, SQLField
 from .source import ImportSource
 import os
 import urllib.parse
 from bmsdna.sql_utils.query import build_connection_string
+from .sqlschema import convert_to_sql_field
 import logging
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -54,9 +55,10 @@ class LakeSource(ImportSource):
         jsd = self._get_meta()
         return jsd["partition_values"]
 
-    def get_schema(self) -> list[FieldWithType]:
+    def get_schema(self) -> list[SQLField]:
         jsd = self._get_meta()
-        return jsd.get("data_schema", jsd.get("schema", None))
+        fields = jsd.get("data_schema", jsd.get("schema", None))
+        return [convert_to_sql_field(f) for f in fields]
 
     def get_last_change_date(self):
         jsd = self._get_meta()
@@ -96,7 +98,7 @@ class LakeSource(ImportSource):
 
             with pyodbc.connect(build_connection_string(connection_string, odbc=True)) as con:
                 schema = self.get_schema()
-                filtered_schema = schema if not select else [f for f in schema if f["name"] in select]
+                filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
                         full_url, auth=aiohttp.BasicAuth(self.lake_api_auth[0], self.lake_api_auth[1])
@@ -106,7 +108,7 @@ class LakeSource(ImportSource):
                         await insert_into_table_via_json(
                             json_batches=r, table_name=target_table, connection=con, schema=filtered_schema
                         )
-                        col_names = [f["name"] for f in filtered_schema]
+                        col_names = [f.column_name for f in filtered_schema]
             return WriteInfo(column_names=col_names, table_name=target_table)
         else:
             logger.info(f"Get Data from {full_url}")
