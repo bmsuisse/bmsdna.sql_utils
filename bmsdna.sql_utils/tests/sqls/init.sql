@@ -128,7 +128,7 @@ GO
 IF NOT EXISTS(
     Select *
     from sys.schemas
-    where name = 'long schema'
+    where name = 'lake_import'
 ) begin exec sp_executesql N'CREATE SCHEMA lake_import'
 end;
 GO
