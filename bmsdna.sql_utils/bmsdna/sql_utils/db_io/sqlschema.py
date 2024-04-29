@@ -18,12 +18,14 @@ def convert_to_sql_field(field: FieldWithType):
     sqt = get_sql_type(field["type"]["type_str"], field.get("max_str_length", None))
     return SQLField(field["name"], ex.DataType.build(sqt, dialect="tsql"))
 
+
 def with_max_str_length(t: ex.DataType, max_str_length: int) -> ex.DataType:
-    sql_str = t.sql("t")
+    sql_str = t.sql("tsql")
     if "(" in sql_str:
-        sql_str = sql_str[0: sql_str.find("(")]
-    new_str = f"{sql_str}{max_str_length}" if max_str_length!= -1 else sql_str + "(MAX)"
+        sql_str = sql_str[0 : sql_str.find("(")]
+    new_str = f"{sql_str}{max_str_length}" if max_str_length != -1 else sql_str + "(MAX)"
     return ex.DataType.build(new_str, dialect="tsql")
+
 
 def get_str_length(field: SQLField | ex.DataType):
     if isinstance(field, SQLField):
