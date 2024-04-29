@@ -9,6 +9,7 @@ drop table if exists dbo.[company2];
 drop table if exists dbo.[company3];
 drop table if exists [long schema].[long table name];
 drop table if exists dbo.[log];
+
 drop view if exists [long schema].[long table name_as_view];
 GO
 create table dbo.[log] (id int primary key identity(1, 1), message nvarchar(max), [inserted_at] datetime not null default(getdate()));
@@ -122,6 +123,13 @@ IF NOT EXISTS(
     from sys.schemas
     where name = 'long schema'
 ) begin exec sp_executesql N'CREATE SCHEMA [long schema]'
+end;
+GO
+IF NOT EXISTS(
+    Select *
+    from sys.schemas
+    where name = 'long schema'
+) begin exec sp_executesql N'CREATE SCHEMA lake_import'
 end;
 GO
 CREATE TABLE [long schema].[long table name] (
