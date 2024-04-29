@@ -14,11 +14,12 @@ import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
     import pyspark
+    from pyspark.sql import DataFrame
 logger = logging.getLogger(__name__)
 
 
 class SourceSpark(ImportSource):
-    def __init__(self, df: "pyspark.DataFrame", use_json_insert=False, change_date: datetime | None) -> None:
+    def __init__(self, df: "DataFrame", use_json_insert=False, change_date: datetime | None = None) -> None:
         super().__init__()
         
         self._schema: list[SQLField] | None = None
