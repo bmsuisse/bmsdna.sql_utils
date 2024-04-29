@@ -24,7 +24,6 @@ class SourceSpark(ImportSource):
 
         self._schema: list[SQLField] | None = None
         self.use_json_insert = use_json_insert
-        self.batch_size = 1048576 if not use_json_insert else 1000
         self.df = df
         self.change_date = change_date
 
@@ -37,7 +36,13 @@ class SourceSpark(ImportSource):
     ) -> WriteInfo:
         import pyarrow as pa
 
-        tbl = pa.Table.from_pandas(self.df.toPandas())
+        p_df = self.df
+        if partition_filters:
+            from pyspark.sql.functions import col, lit
+
+            for k, v in partition_filters.items():
+                p_df = p_df.filter(col(k) == lit(v))
+        tbl = pa.Table.from_pandas(p_df.toPandas())
 
         record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
         from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
@@ -63,12 +68,14 @@ class SourceSpark(ImportSource):
     def get_partition_values(self) -> list[dict]:
         col_names = [f.column_name for f in self.get_schema()]
         if "_partition" in col_names:
-            return [r.asDict(True) for r in self.df.select("_partition").orderBy("_partition").distinct().collect()]
+            return [
+                r.asDict(True) for r in self.df.selectExpr("_partition").orderBy("_partition").distinct().collect()
+            ]
         return []
 
     def get_schema(self) -> list[SQLField]:
         fields = self.df.schema.fields
-        return [SQLField(f.name, ex.DataType.build(str(f.dataType), dialect="tsql")) for f in fields]
+        return [SQLField(f.name, ex.DataType.build(str(f.dataType.simpleString()), dialect="spark")) for f in fields]
 
     def get_last_change_date(self):
         if self.change_date:
