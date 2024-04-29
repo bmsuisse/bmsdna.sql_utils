@@ -23,7 +23,7 @@ def with_max_str_length(t: ex.DataType, max_str_length: int) -> ex.DataType:
     sql_str = t.sql("tsql")
     if "(" in sql_str:
         sql_str = sql_str[0 : sql_str.find("(")]
-    new_str = f"{sql_str}{max_str_length}" if max_str_length != -1 else sql_str + "(MAX)"
+    new_str = f"{sql_str}({max_str_length})" if max_str_length != -1 else sql_str + "(MAX)"
     return ex.DataType.build(new_str, dialect="tsql")
 
 
