@@ -1,11 +1,19 @@
 from typing_extensions import TypedDict, NotRequired
 from typing import List, Optional
+from dataclasses import dataclass
+import sqlglot.expressions as ex
 
 
 class FieldType(TypedDict):
     type_str: str
     fields: NotRequired[Optional[list["FieldWithType"]]]
     inner: NotRequired[Optional["FieldType"]]
+
+
+@dataclass(frozen=True)
+class SQLField:
+    column_name: str
+    data_type: ex.DataType
 
 
 class FieldWithType(TypedDict):

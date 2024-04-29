@@ -1,9 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, List, Literal, Optional, TypeVar, TYPE_CHECKING
 from typing_extensions import TypedDict, NotRequired
-from bmsdna.sql_utils.lake import (
-    FieldWithType,
-)
+from bmsdna.sql_utils.lake import FieldWithType, SQLField
 from bmsdna.sql_utils.server_info import DBInfo
 from .db_logging import init_logging, insert_into_log
 from .sqlschema import (
@@ -63,14 +61,14 @@ def _str_part_filter(partition_filter: Optional[dict]):
 async def _do_merge(
     source: ImportSource,
     target_table: tuple[str, str],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     conn: "pyodbc.Connection | pytds.Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
     connection_string: str | dict,
     select: list[str] | None,
     temp_table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None,
+    constant_values: dict[str, tuple[SQLField, Any]] | None,
 ):
     temp_table_name = "##" + target_table[1] + "_" + str(uuid.uuid4()).replace("-", "")
     create_table(
@@ -90,7 +88,7 @@ async def _do_merge(
 async def _do_merge_updatecol(
     source: ImportSource,
     target_table: tuple[str, str],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     conn: "pyodbc.Connection | pytds.Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
@@ -98,7 +96,7 @@ async def _do_merge_updatecol(
     connection_string: str | dict,
     select: list[str] | None,
     table_per_partition: bool,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None,
+    constant_values: dict[str, tuple[SQLField, Any]] | None,
     temp_table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
 ) -> list[str]:
     vl = get_max_update_col_value(conn, target_table, update_col, _get_filter_sql(partition_filter))
@@ -182,7 +180,7 @@ async def _do_full_load(
     *,
     source: ImportSource,
     target_table: tuple[str, str],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     conn: "pyodbc.Connection | pytds.Connection",
     partition_filter: Optional[dict],
     connection_string: str | dict,
@@ -192,7 +190,7 @@ async def _do_full_load(
     temp_mode: FULL_TEMP_MODES = "global_temp",
     after_swap: list[Callable[[AfterSwapParams], Any]] | None,
     temp_table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None,
+    constant_values: dict[str, tuple[SQLField, Any]] | None,
 ):
     if is_empty:  # insert directly
         await source.write_to_sql_server(target_table, connection_string, partition_filter, select)
@@ -251,12 +249,12 @@ async def insert_into_table_partition(
     target_table: tuple[str, str],
     connection: str | dict,
     partition_filter: Optional[dict],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     primary_keys: list[str] | None,
     update_col: Optional[str],
     select: Optional[list[str]],
     skip_create_table=False,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None = None,
+    constant_values: dict[str, tuple[SQLField, Any]] | None = None,
     calculated_values: dict[str, str] | None = None,
     temp_full_mode: FULL_TEMP_MODES = "global_temp",
     after_swap: list[Callable[[AfterSwapParams], Any]] | None = None,
