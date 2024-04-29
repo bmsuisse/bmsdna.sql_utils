@@ -8,7 +8,10 @@ if TYPE_CHECKING:
 
 def recursive_get_type(t: "DataType", jsonify_complex: bool, dialect: str = "spark") -> ex.DataType:
     import pyarrow as pa
+    import pyarrow.types as pat
 
+    if pat.is_decimal(t):
+        return ex.DataType.build(f"decimal({t.precision},{t.scale})", dialect="dialect")
     is_complex = pa.types.is_nested(t)
     if is_complex and not jsonify_complex:
         return ex.DataType.build(str(t), dialect=dialect)
