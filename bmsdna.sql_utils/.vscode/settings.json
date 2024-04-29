@@ -1,0 +1,22 @@
+{
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "aiohttp",
+        "connstr",
+        "deltalake",
+        "duckdb",
+        "jsonify",
+        "lakeapi",
+        "odbc",
+        "pyarrow",
+        "pydantic",
+        "sqlglot",
+        "tsql"
+    ],
+    "python.testing.pytestArgs": ["tests"],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "[sql]": {
+        "editor.formatOnSave": false
+    }
+}

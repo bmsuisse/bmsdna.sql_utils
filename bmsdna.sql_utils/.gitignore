@@ -1,0 +1,3 @@
+__azurite*
+datatest
+tests/db_to_delta/_data
