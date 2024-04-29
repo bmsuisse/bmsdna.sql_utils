@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class SourceSpark(ImportSource):
     def __init__(self, df: "DataFrame", use_json_insert=False, change_date: datetime | None = None) -> None:
         super().__init__()
-        
+
         self._schema: list[SQLField] | None = None
         self.use_json_insert = use_json_insert
         self.batch_size = 1048576 if not use_json_insert else 1000
@@ -36,11 +36,12 @@ class SourceSpark(ImportSource):
         select: list[str] | None,
     ) -> WriteInfo:
         import pyarrow as pa
-        tbl =  pa.Table.from_pandas(self.df.toPandas())
+
+        tbl = pa.Table.from_pandas(self.df.toPandas())
 
         record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
         from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
-        
+
         table_str = target_table if isinstance(target_table, str) else target_table[0] + "." + target_table[1]
         connection_string_sql = build_connection_string(connection_string, odbc=False)
         if self.use_json_insert:
@@ -55,21 +56,16 @@ class SourceSpark(ImportSource):
                 )
                 col_names = [f.column_name for f in filtered_schema]
         else:
-            res = await insert_record_batch_to_sql(
-                connection_string_sql, table_str, record_batch_reader, select
-            )
+            res = await insert_record_batch_to_sql(connection_string_sql, table_str, record_batch_reader, select)
             col_names = [f["name"] for f in res["fields"]]
-                # r.raise_for_status()
-        else:
-            col_names = []
         return WriteInfo(column_names=col_names, table_name=target_table)
 
     def get_partition_values(self) -> list[dict]:
         col_names = [f.column_name for f in self.get_schema()]
         if "_partition" in col_names:
             return [r.asDict(True) for r in self.df.select("_partition").orderBy("_partition").distinct().collect()]
-        return []   
- 
+        return []
+
     def get_schema(self) -> list[SQLField]:
         fields = self.df.schema.fields
         return [SQLField(f.name, ex.DataType.build(str(f.dataType), dialect="tsql")) for f in fields]
