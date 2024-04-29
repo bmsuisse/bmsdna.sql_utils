@@ -22,7 +22,7 @@ def convert_to_sql_field(field: FieldWithType):
 def get_str_length(field: SQLField | ex.DataType):
     if isinstance(field, SQLField):
         return get_str_length(field.data_type)
-    if len(field.expressions) != 0:
+    if len(field.expressions) != 1:
         return None
     t_zero = field.expressions[0]
     if not isinstance(t_zero, int):
@@ -121,7 +121,7 @@ def get_col_definition(
     if formula is not None:
         return sql_quote_name(field.column_name) + " AS " + formula
     sql_type = field.data_type.sql("tsql")
-    definit = sql_quote_name(field_name) + " " + sql_type + (" NOT NULL" if not nullable else "")
+    definit = sql_quote_name(field.column_name) + " " + sql_type + (" NOT NULL" if not nullable else "")
     if default is not None and default.lower() != "null":
         definit += " DEFAULT (" + default + ")"
     return definit
@@ -139,7 +139,7 @@ def sql_quote_value_with_type(field: FieldWithType | SQLField, value: Any) -> st
             return f"CAST(0 as bit)"
     if value is not None and str(field.data_type.type).lower() in ["string", "int32", "varchar", "int"]:
         return sql_quote_value(value)  # string / int32 are defaults for sql server
-    sql_type = get_sql_type(type_str, max_str_length)
+    sql_type = field.data_type.sql("tsql")
     if value is not None:
         return f"CAST({sql_quote_value(value)} as {sql_type})"
     else:
@@ -152,14 +152,14 @@ def get_sql_for_schema(
     primary_keys: list[str] | None,
     with_exist_check: bool,
     default_values: Mapping[str, tuple[FieldWithType | SQLField, Any]] | None = None,
-    calculated_values: dict[str, str] | None = None,
+    calculated_values: Mapping[str, str] | None = None,
 ):
     cols_sql = [
         get_field_col_definition(
             f,
             primary_keys is None or f.column_name not in primary_keys,
             default=(
-                sql_quote_value_field(*default_values[f.column_name])
+                sql_quote_value_with_type(*default_values[f.column_name])
                 if default_values and f.column_name in default_values
                 else None
             ),
@@ -239,8 +239,8 @@ def create_table(
     conn: "pyodbc.Connection | pytds.Connection",
     primary_keys: list[str] | None,
     overwrite: bool,
-    default_values: dict[str, tuple[FieldWithType, Any]] | None = None,
-    calculated_values: dict[str, str] | None = None,
+    default_values: Mapping[str, tuple[SQLField, Any]] | None = None,
+    calculated_values: Mapping[str, str] | None = None,
     callback: list[Callable[[CreateTableCallbackParams], Any]] | None = None,
 ):
     created = False
