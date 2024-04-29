@@ -1,17 +1,16 @@
 from dataclasses import dataclass
-from typing import Any, Callable, List, Literal, Optional, TypeVar, TYPE_CHECKING
+from typing import Any, Callable, List, Literal, Optional, TypeVar, TYPE_CHECKING, Mapping
 from typing_extensions import TypedDict, NotRequired
-from bmsdna.sql_utils.lake import (
-    FieldWithType,
-)
+from bmsdna.sql_utils.lake import FieldWithType, SQLField
 from bmsdna.sql_utils.server_info import DBInfo
 from .db_logging import init_logging, insert_into_log
 from .sqlschema import (
-    sql_quote_value_field,
     create_table,
     is_table_empty,
     get_max_update_col_value,
     CreateTableCallbackParams,
+    sql_quote_value_with_type,
+    get_str_length,
 )
 from bmsdna.sql_utils.query import sql_quote_name, build_connection_string, sql_quote_value
 from bmsdna.sql_utils.db_io.source import ImportSource
@@ -63,14 +62,14 @@ def _str_part_filter(partition_filter: Optional[dict]):
 async def _do_merge(
     source: ImportSource,
     target_table: tuple[str, str],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     conn: "pyodbc.Connection | pytds.Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
     connection_string: str | dict,
     select: list[str] | None,
     temp_table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None,
+    constant_values: Mapping[str, tuple[SQLField, Any]] | None,
 ):
     temp_table_name = "##" + target_table[1] + "_" + str(uuid.uuid4()).replace("-", "")
     create_table(
@@ -90,7 +89,7 @@ async def _do_merge(
 async def _do_merge_updatecol(
     source: ImportSource,
     target_table: tuple[str, str],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     conn: "pyodbc.Connection | pytds.Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
@@ -98,7 +97,7 @@ async def _do_merge_updatecol(
     connection_string: str | dict,
     select: list[str] | None,
     table_per_partition: bool,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None,
+    constant_values: Mapping[str, tuple[SQLField, Any]] | None,
     temp_table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
 ) -> list[str]:
     vl = get_max_update_col_value(conn, target_table, update_col, _get_filter_sql(partition_filter))
@@ -123,7 +122,7 @@ async def _do_merge_updatecol(
         temp_table_name_updates = "##" + target_table[1] + "_" + str(uuid.uuid4()).replace("-", "") + "_updates"
         create_table(
             temp_table_name_pk,
-            [f for f in schema if f["name"] in primary_keys],
+            [f for f in schema if f.column_name in primary_keys],
             conn,
             [],
             True,
@@ -146,7 +145,7 @@ async def _do_merge_updatecol(
         write_info_updates = await source.write_to_sql_server(
             temp_table_name_updates, connection_string, (partition_filter or {}) | {update_col + "_gte": vl}, select
         )
-        exclude_cols = [f["name"] for f in schema if (f.get("max_str_length", 0) or 0) > 8000]
+        exclude_cols = [f.column_name for f in schema if (get_str_length(f.data_type) or 0) > 8000]
         await execute_merge(
             conn,
             target_table,
@@ -182,7 +181,7 @@ async def _do_full_load(
     *,
     source: ImportSource,
     target_table: tuple[str, str],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     conn: "pyodbc.Connection | pytds.Connection",
     partition_filter: Optional[dict],
     connection_string: str | dict,
@@ -192,7 +191,7 @@ async def _do_full_load(
     temp_mode: FULL_TEMP_MODES = "global_temp",
     after_swap: list[Callable[[AfterSwapParams], Any]] | None,
     temp_table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None,
+    constant_values: Mapping[str, tuple[SQLField, Any]] | None,
 ):
     if is_empty:  # insert directly
         await source.write_to_sql_server(target_table, connection_string, partition_filter, select)
@@ -210,7 +209,7 @@ async def _do_full_load(
         )
         select_4_insert = select
         if constant_values:
-            select_4_insert = select or [f["name"] for f in schema]
+            select_4_insert = select or [f.column_name for f in schema]
             select_4_insert = [s for s in select_4_insert if s not in constant_values.keys()]
         write_info = await source.write_to_sql_server(
             temp_table_name, connection_string, partition_filter, select_4_insert
@@ -236,7 +235,7 @@ async def _do_full_load(
         )
         select_4_insert = select
         if constant_values:
-            select_4_insert = select or [f["name"] for f in schema]
+            select_4_insert = select or [f.column_name for f in schema]
             select_4_insert = [s for s in select_4_insert if s not in constant_values.keys()]
         write_info = await source.write_to_sql_server(
             temp_table_name, connection_string, partition_filter, select_4_insert
@@ -251,13 +250,13 @@ async def insert_into_table_partition(
     target_table: tuple[str, str],
     connection: str | dict,
     partition_filter: Optional[dict],
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     primary_keys: list[str] | None,
     update_col: Optional[str],
     select: Optional[list[str]],
     skip_create_table=False,
-    constant_values: dict[str, tuple[FieldWithType, Any]] | None = None,
-    calculated_values: dict[str, str] | None = None,
+    constant_values: Mapping[str, tuple[SQLField, Any]] | None = None,
+    calculated_values: Mapping[str, str] | None = None,
     temp_full_mode: FULL_TEMP_MODES = "global_temp",
     after_swap: list[Callable[[AfterSwapParams], Any]] | None = None,
     table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
@@ -269,7 +268,9 @@ async def insert_into_table_partition(
         schema = [
             f
             for f in schema
-            if f["name"] in select or f["name"] in (primary_keys or []) or f["name"] in partition_filter_keys
+            if f.column_name in select
+            or f.column_name in (primary_keys or [])
+            or f.column_name in partition_filter_keys
         ]
     partition_filter_str = _str_part_filter(partition_filter)
     temp_tables = []
@@ -432,7 +433,7 @@ async def execute_merge(
         cur.execute(sql)
 
 
-def _part_tbl(part_values: dict):
+def _part_tbl(part_values: Mapping):
     if len(part_values) == 1:
         return "_" + str(list(part_values.values())[0])
     sorted_items = sorted(part_values.items(), key=lambda x: x[0])  # sort keys alphabetically
@@ -448,11 +449,11 @@ def _make_list(x: T | list[T] | None) -> list[T] | None:
     return [x]
 
 
-def _get_select(c: str, constant_values: dict, calculated_columns: dict):
+def _get_select(c: str, constant_values: Mapping, calculated_columns: Mapping):
     if c not in constant_values and c not in calculated_columns:
         return sql_quote_name(c)
     if c in constant_values.keys():
-        return f"{sql_quote_value_field(*constant_values[c])} as {sql_quote_name(c)}"
+        return f"{sql_quote_value_with_type(*constant_values[c])} as {sql_quote_name(c)}"
     return calculated_columns[c] + " as  " + sql_quote_name(c)
 
 
@@ -498,7 +499,7 @@ async def insert_into_table(
     temp_table_callback: (
         list[Callable[[CreateTableCallbackParams], Any]] | Callable[[CreateTableCallbackParams], Any] | None
     ) = None,
-    calculated_columns: dict[str, Any] | None = None,
+    calculated_columns: Mapping[str, Any] | None = None,
     await_partitions=True,
     force=False,
 ):
@@ -521,7 +522,7 @@ async def insert_into_table(
     if part_values is not None and len(part_values) > 0:
         table_sql: list[str] = []
         if table_per_partition:
-            all_cols = CasePreservingSet(select or [f["name"] for f in schema])
+            all_cols = CasePreservingSet(select or [f.column_name for f in schema])
             for k in calculated_columns.keys():
                 all_cols.add(k)
             for k in part_values[0].keys():
@@ -542,11 +543,11 @@ async def insert_into_table(
                     + sql_quote_name(target_table_part)
                 )
                 select = select or [
-                    f["name"]
+                    f.column_name
                     for f in schema
-                    if not f["name"].startswith("__")
-                    and f["name"] not in constant_values.keys()
-                    and f["name"] not in calculated_columns.keys()
+                    if not f.column_name.startswith("__")
+                    and f.column_name not in constant_values.keys()
+                    and f.column_name not in calculated_columns.keys()
                 ]
                 table_sql.append(sql)
             prom = insert_into_table_partition(
@@ -597,7 +598,9 @@ async def insert_into_table(
         constant_values = source.get_constant_values(None, select=select)
 
         select = select or [
-            f["name"] for f in schema if not f["name"].startswith("__") and f["name"] not in constant_values.keys()
+            f.column_name
+            for f in schema
+            if not f.column_name.startswith("__") and f.column_name not in constant_values.keys()
         ]
         await insert_into_table_partition(
             target_table=target_table,

@@ -1,5 +1,5 @@
 from bmsdna.sql_utils.db_io.sqlschema import get_sql_for_schema
-from bmsdna.sql_utils.lake.types import FieldWithType, FieldType
+from bmsdna.sql_utils.lake.types import SQLField, FieldType
 import sqlglot
 import sqlglot.expressions as exp
 
@@ -7,7 +7,7 @@ import sqlglot.expressions as exp
 def test_schema_with_calc():
     sql = get_sql_for_schema(
         ("dbo", "tester"),
-        [FieldWithType(name="p1", type=FieldType(type_str="int", fields=None, inner=None), max_str_length=None)],
+        [SQLField(column_name="p1", data_type=exp.DataType.build(dtype=exp.DataType.Type.INT))],
         primary_keys=[],
         with_exist_check=False,
         default_values=None,
@@ -18,7 +18,7 @@ def test_schema_with_calc():
     assert isinstance(expr, exp.Create)
     sql = get_sql_for_schema(
         ("dbo", "tester"),
-        [FieldWithType(name="p1", type=FieldType(type_str="int", fields=None, inner=None), max_str_length=None)],
+        [SQLField(column_name="p1", data_type=exp.DataType.build(dtype=exp.DataType.Type.INT))],
         primary_keys=[],
         with_exist_check=False,
         default_values=None,

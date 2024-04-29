@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Callable, Literal, Union, Optional, Any, TYPE_CHECKING
+from typing import Callable, Literal, Union, Optional, Any, TYPE_CHECKING, Mapping
 import logging
-from bmsdna.sql_utils.lake import FieldWithType
+from bmsdna.sql_utils.lake import FieldWithType, SQLField
 from bmsdna.sql_utils.query import sql_quote_name, sql_quote_value
+import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
     import pyodbc
@@ -12,13 +13,41 @@ logger = logging.getLogger(__name__)
 table_name_type = Union[str, tuple[str, str]]
 
 
+def convert_to_sql_field(field: FieldWithType):
+
+    sqt = get_sql_type(field["type"]["type_str"], field.get("max_str_length", None))
+    return SQLField(field["name"], ex.DataType.build(sqt, dialect="tsql"))
+
+
+def with_max_str_length(t: ex.DataType, max_str_length: int) -> ex.DataType:
+    sql_str = t.sql("tsql")
+    if "(" in sql_str:
+        sql_str = sql_str[0 : sql_str.find("(")]
+    new_str = f"{sql_str}({max_str_length})" if max_str_length != -1 else sql_str + "(MAX)"
+    return ex.DataType.build(new_str, dialect="tsql")
+
+
+def get_str_length(field: SQLField | ex.DataType):
+    if isinstance(field, SQLField):
+        return get_str_length(field.data_type)
+    if len(field.expressions) != 1:
+        return None
+    t_zero = field.expressions[0]
+    if not isinstance(t_zero, int):
+        t_zero = t_zero.this
+    if not isinstance(t_zero, int):
+        t_zero = t_zero.this
+    assert isinstance(t_zero, int)
+    return t_zero
+
+
 def get_field_col_definition(
-    field: FieldWithType, nullable=True, default: str | None = None, formula: str | None = None
+    field: FieldWithType | SQLField, nullable=True, default: str | None = None, formula: str | None = None
 ) -> str:
+    if not isinstance(field, SQLField):
+        field = convert_to_sql_field(field)
     return get_col_definition(
-        field_name=field["name"],
-        type_str=field["type"]["type_str"],
-        max_str_length=field.get("max_str_length", None),
+        field=field,
         default=default,
         formula=formula,
     )
@@ -92,36 +121,33 @@ def get_sql_type(type_str: str, max_str_length: Optional[int]):
 
 
 def get_col_definition(
-    field_name: str,
-    type_str: str,
-    max_str_length: Optional[int],
+    field: SQLField,
     nullable=True,
     default: str | None = None,
     formula: str | None = None,
 ) -> str:
     if formula is not None:
-        return sql_quote_name(field_name) + " AS " + formula
-    sql_type = get_sql_type(type_str, max_str_length)
-    definit = sql_quote_name(field_name) + " " + sql_type + (" NOT NULL" if not nullable else "")
+        return sql_quote_name(field.column_name) + " AS " + formula
+    sql_type = field.data_type.sql("tsql")
+    definit = sql_quote_name(field.column_name) + " " + sql_type + (" NOT NULL" if not nullable else "")
     if default is not None and default.lower() != "null":
         definit += " DEFAULT (" + default + ")"
     return definit
 
 
-def sql_quote_value_field(type: FieldWithType, value: Any):
-    return sql_quote_value_with_type(type["type"]["type_str"], type.get("max_str_length", None), value)
+def sql_quote_value_with_type(field: FieldWithType | SQLField, value: Any) -> str:
+    if not isinstance(field, SQLField):
+        field = convert_to_sql_field(field)
 
-
-def sql_quote_value_with_type(type_str: str, max_str_length: int | None, value: Any) -> str:
-    if value is not None and type_str.lower() in ["bit", "bool", "boolean"]:
+    if value is not None and field.data_type.type in [ex.DataType.Type.BOOLEAN, ex.DataType.Type.BIT]:
         assert type(value) == bool
         if value == True:
             return f"CAST(1 as bit)"
         else:
             return f"CAST(0 as bit)"
-    if value is not None and type_str.lower() in ["string", "int32", "varchar", "int"]:
+    if value is not None and str(field.data_type.type).lower() in ["string", "int32", "varchar", "int"]:
         return sql_quote_value(value)  # string / int32 are defaults for sql server
-    sql_type = get_sql_type(type_str, max_str_length)
+    sql_type = field.data_type.sql("tsql")
     if value is not None:
         return f"CAST({sql_quote_value(value)} as {sql_type})"
     else:
@@ -130,30 +156,30 @@ def sql_quote_value_with_type(type_str: str, max_str_length: int | None, value: 
 
 def get_sql_for_schema(
     table_name: table_name_type,
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     primary_keys: list[str] | None,
     with_exist_check: bool,
-    default_values: dict[str, tuple[FieldWithType, Any]] | None = None,
-    calculated_values: dict[str, str] | None = None,
+    default_values: Mapping[str, tuple[FieldWithType | SQLField, Any]] | None = None,
+    calculated_values: Mapping[str, str] | None = None,
 ):
     cols_sql = [
         get_field_col_definition(
             f,
-            primary_keys is None or f["name"] not in primary_keys,
+            primary_keys is None or f.column_name not in primary_keys,
             default=(
-                sql_quote_value_field(*default_values[f["name"]])
-                if default_values and f["name"] in default_values
+                sql_quote_value_with_type(*default_values[f.column_name])
+                if default_values and f.column_name in default_values
                 else None
             ),
             formula=(
-                calculated_values[f["name"]]
-                if calculated_values is not None and f["name"] in calculated_values
+                calculated_values[f.column_name]
+                if calculated_values is not None and f.column_name in calculated_values
                 else None
             ),
         )
         for f in schema
     ]
-    l_col_names = [f["name"].lower() for f in schema]
+    l_col_names = [f.column_name.lower() for f in schema]
     if calculated_values is not None:
         for k, v in calculated_values.items():
             if k.lower() not in l_col_names:
@@ -183,15 +209,23 @@ def get_sql_for_schema(
     return create_sql
 
 
-def get_raw_type(type: str):
+def get_raw_type(type: str | ex.DataType | ex.DataType.Type) -> str:
+    if isinstance(type, ex.DataType.Type):
+        return str(type).lower()
+    if isinstance(type, ex.DataType):
+        return str(type.type).lower()
     if "(" in type:
         return type[: type.find("(")]
     return type
 
 
-def col_approx_eq(type1: str, type2: str):
+def col_approx_eq(type1: str, type2: str | ex.DataType | ex.DataType.Type):
     if type1 == type2:
         return True
+    if isinstance(type2, ex.DataType.Type):
+        type2 = str(type2).lower()
+    elif isinstance(type2, ex.DataType):
+        type2 = str(type2.type).lower()
     if type1 in ["varchar", "nvarchar"] and type2 in ["varchar", "nvarchar"]:
         return True
     return False
@@ -200,7 +234,7 @@ def col_approx_eq(type1: str, type2: str):
 @dataclass(frozen=True)
 class CreateTableCallbackParams:
     table_name: table_name_type
-    schema: list[FieldWithType]
+    schema: list[SQLField]
     conn: "pyodbc.Connection | pytds.Connection"
     primary_keys: list[str] | None
     action: Literal["create", "adjusted", "none"]
@@ -209,12 +243,12 @@ class CreateTableCallbackParams:
 
 def create_table(
     table_name: table_name_type,
-    schema: list[FieldWithType],
+    schema: list[SQLField],
     conn: "pyodbc.Connection | pytds.Connection",
     primary_keys: list[str] | None,
     overwrite: bool,
-    default_values: dict[str, tuple[FieldWithType, Any]] | None = None,
-    calculated_values: dict[str, str] | None = None,
+    default_values: Mapping[str, tuple[SQLField, Any]] | None = None,
+    calculated_values: Mapping[str, str] | None = None,
     callback: list[Callable[[CreateTableCallbackParams], Any]] | None = None,
 ):
     created = False
@@ -247,41 +281,43 @@ def create_table(
             truncate = False
             separate_cursors = False
             for scc in schema:
-                max_len = scc.get("max_str_length", None)
-                existing_col = col_dict.get(scc["name"].lower(), None)
+                max_len = get_str_length(scc.data_type)
+                existing_col = col_dict.get(scc.column_name.lower(), None)
                 if existing_col is None:
                     defini = get_field_col_definition(
                         scc,
-                        primary_keys is None or scc["name"] not in primary_keys,
+                        primary_keys is None or scc.column_name not in primary_keys,
                         default=(
-                            sql_quote_value_field(*default_values[scc["name"]])
-                            if default_values and scc["name"] in default_values
+                            sql_quote_value_with_type(*default_values[scc.column_name])
+                            if default_values and scc.column_name in default_values
                             else None
                         ),
-                        formula=calculated_values.get(scc["name"], None) if calculated_values is not None else None,
+                        formula=(
+                            calculated_values.get(scc.column_name, None) if calculated_values is not None else None
+                        ),
                     )
                     truncate = True
                     todos.append(f"ALTER TABLE {sql_quote_name(table_name)} ADD {defini}")
 
                 elif (
-                    not col_approx_eq(
-                        existing_col["data_type"], get_raw_type(get_sql_type(scc["type"]["type_str"], None))
-                    )
-                    and scc["name"] not in (calculated_values or dict())
-                    and scc["name"] not in (default_values or dict())
+                    not col_approx_eq(existing_col["data_type"], scc.data_type)
+                    and scc.column_name not in (calculated_values or dict())
+                    and scc.column_name not in (default_values or dict())
                 ):
                     truncate = True
                     separate_cursors = True
-                    todos.append(f"ALTER TABLE {sql_quote_name(table_name)} DROP COLUMN {sql_quote_name(scc['name'])}")
-                    defini = get_field_col_definition(scc, primary_keys is None or scc["name"] not in primary_keys)
+                    todos.append(
+                        f"ALTER TABLE {sql_quote_name(table_name)} DROP COLUMN {sql_quote_name(scc.column_name)}"
+                    )
+                    defini = get_field_col_definition(scc, primary_keys is None or scc.column_name not in primary_keys)
                     todos.append(f"ALTER TABLE {sql_quote_name(table_name)} ADD {defini}")
                 elif (
                     max_len is not None
                     and existing_col["max_len"]
                     and max_len > existing_col["max_len"]
                     and existing_col["max_len"] != -1
-                    and scc["name"] not in (calculated_values or dict())
-                    and scc["name"] not in (default_values or dict())
+                    and scc.column_name not in (calculated_values or dict())
+                    and scc.column_name not in (default_values or dict())
                 ):
                     max_len_str = str(max_len)
                     if (max_len > 4000 and existing_col["data_type"] == "nvarchar") or (
@@ -290,7 +326,7 @@ def create_table(
                         max_len_str = "MAX"
                     sql_t = existing_col["data_type"] + "(" + max_len_str + ")"
                     todos.append(
-                        f"ALTER TABLE {sql_quote_name(table_name)} ALTER COLUMN {sql_quote_name(scc['name'])} {sql_t}"
+                        f"ALTER TABLE {sql_quote_name(table_name)} ALTER COLUMN {sql_quote_name(scc.column_name)} {sql_t}"
                     )
             if truncate:
                 todos.insert(0, f"TRUNCATE TABLE {sql_quote_name(table_name)}")

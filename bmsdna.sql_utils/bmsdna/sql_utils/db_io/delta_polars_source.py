@@ -5,9 +5,10 @@ from .source import ImportSource, WriteInfo
 import urllib.parse
 from bmsdna.sql_utils.query import build_connection_string
 import logging
-from bmsdna.sql_utils.lake.types import FieldWithType
+from bmsdna.sql_utils.lake.types import FieldWithType, SQLField
 from bmsdna.sql_utils.lake.type_fromarrow import recursive_get_type
 from bmsdna.sql_utils.query import sql_quote_name
+from .sqlschema import with_max_str_length
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -26,7 +27,7 @@ class DeltaPolarsSource(ImportSource):
             self.delta_lake = deltalake.DeltaTable(path_or_table, storage_options=storage_options)
         else:
             self.delta_lake = path_or_table
-        self._schema: list[FieldWithType] | None = None
+        self._schema: list[SQLField] | None = None
         self.use_json_insert = use_json_insert
         self.batch_size = 1048576 if not use_json_insert else 1000
 
@@ -59,11 +60,11 @@ class DeltaPolarsSource(ImportSource):
 
             with pyodbc.connect(build_connection_string(connection_string, odbc=True)) as con:
                 schema = self.get_schema()
-                filtered_schema = schema if not select else [f for f in schema if f["name"] in select]
+                filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                 await insert_into_table_via_json_from_batches(
                     reader=record_batch_reader, table_name=target_table, connection=con, schema=filtered_schema
                 )
-                col_names = [f["name"] for f in filtered_schema]
+                col_names = [f.column_name for f in filtered_schema]
         else:
             res = await insert_record_batch_to_sql(connection_string_sql, table_str, record_batch_reader, select)
             col_names = [f["name"] for f in res["fields"]]
@@ -82,7 +83,7 @@ class DeltaPolarsSource(ImportSource):
         )
         return sorted.collect().to_dicts()
 
-    def get_schema(self) -> list[FieldWithType]:
+    def get_schema(self) -> list[SQLField]:
         import pyarrow as pa
 
         if self._schema is not None:
@@ -92,7 +93,7 @@ class DeltaPolarsSource(ImportSource):
         schema = self.delta_lake.schema().to_pyarrow()
         sql_lens = []
         length_fields: list[str] = []
-        fields: dict[str, FieldWithType] = dict()
+        fields: dict[str, SQLField] = dict()
         for fieldname in schema.names:
             if fieldname.startswith("__"):
                 continue
@@ -105,7 +106,7 @@ class DeltaPolarsSource(ImportSource):
                 and t.value_type is not None
             )
             is_string = pa.types.is_string(t) or pa.types.is_large_string(t)
-            fields[fieldname] = FieldWithType(name=fieldname, type=recursive_get_type(t, True), max_str_length=None)
+            fields[fieldname] = SQLField(column_name=fieldname, data_type=recursive_get_type(t, True))
             if is_complex:
                 length_fields.append(fieldname)
                 import json
@@ -118,7 +119,7 @@ class DeltaPolarsSource(ImportSource):
         if len(sql_lens) > 0:
             res = polars_scan_delta(self.delta_lake).select(*sql_lens).collect().to_dicts()
             for lf in length_fields:
-                fields[lf]["max_str_length"] = res[0][lf]
+                fields[lf] = SQLField(fields[lf].column_name, with_max_str_length(fields[lf].data_type, res[0][lf]))
 
         self._schema = list(fields.values())
         return self._schema

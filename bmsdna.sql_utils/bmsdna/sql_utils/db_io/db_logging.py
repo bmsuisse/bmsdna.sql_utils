@@ -1,5 +1,6 @@
 from typing import Literal, Optional, Union, TYPE_CHECKING
 import logging
+import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
     import pyodbc
@@ -9,17 +10,17 @@ logger = logging.getLogger(__name__)
 
 
 def init_logging(conn: "pyodbc.Connection|pytds.Connection"):
-    from .sqlschema import create_table, FieldWithType
+    from .sqlschema import create_table, SQLField
 
     create_table(
         ("lake_import", "_log"),
         [
-            FieldWithType(name="table_name", type={"type_str": "varchar"}, max_str_length=200),
-            FieldWithType(name="type", type={"type_str": "varchar"}, max_str_length=100),
-            FieldWithType(name="insert_date", type={"type_str": "datetime"}),
-            FieldWithType(name="partition_filter", type={"type_str": "varchar"}, max_str_length=900),
-            FieldWithType(name="error", type={"type_str": "nvarchar"}, max_str_length=4000),
-            FieldWithType(name="sql", type={"type_str": "nvarchar"}, max_str_length=4000),
+            SQLField(column_name="table_name", data_type=ex.DataType.build("varchar(200)", dialect="tsql")),
+            SQLField(column_name="type", data_type=ex.DataType.build("varchar(100)", dialect="tsql")),
+            SQLField(column_name="insert_date", data_type=ex.DataType.build("datetime", dialect="tsql")),
+            SQLField(column_name="partition_filter", data_type=ex.DataType.build("varchar(900)", dialect="tsql")),
+            SQLField(column_name="error", data_type=ex.DataType.build("nvarchar(4000)", dialect="tsql")),
+            SQLField(column_name="sql", data_type=ex.DataType.build("nvarchar(4000)", dialect="tsql")),
         ],
         conn,
         overwrite=False,
