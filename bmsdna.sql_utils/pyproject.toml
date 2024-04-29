@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bmsdna-sql-utils"
-version = "0.11.6"
+version = "0.11.7"
 description = ""
 authors = ["Adrian Ehrsam <adrian.ehrsam@bmsuisse.ch>"]
 readme = "README.md"
