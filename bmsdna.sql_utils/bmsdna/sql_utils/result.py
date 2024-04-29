@@ -9,30 +9,27 @@ Row = Tuple
 
 
 @overload
-def make_class_from_cursor(classtype: type[dict], description: Sequence[Tuple], values: Sequence) -> list[dict]:
-    ...
+def make_class_from_cursor(classtype: type[dict], description: Sequence[Tuple], values: Sequence) -> list[dict]: ...
 
 
 @overload
-def make_class_from_cursor(classtype: type[dict], description: Sequence[Tuple], values: tuple) -> dict:
-    ...
+def make_class_from_cursor(classtype: type[dict], description: Sequence[Tuple], values: tuple) -> dict: ...
 
 
 @overload
-def make_class_from_cursor(classtype: type, description: Sequence[Tuple], values: None) -> None:
-    ...
+def make_class_from_cursor(classtype: type, description: Sequence[Tuple], values: None) -> None: ...
 
 
 @overload
 def make_class_from_cursor(
     classtype: type[SomeDataClass], description: Sequence[Tuple], values: Sequence[Row]
-) -> List[SomeDataClass]:
-    ...
+) -> List[SomeDataClass]: ...
 
 
 @overload
-def make_class_from_cursor(classtype: type[SomeDataClass], description: Sequence[Tuple], values: Row) -> SomeDataClass:
-    ...
+def make_class_from_cursor(
+    classtype: type[SomeDataClass], description: Sequence[Tuple], values: Row
+) -> SomeDataClass: ...
 
 
 def make_class_from_cursor(
@@ -64,7 +61,7 @@ def make_class_from_cursor(
         elif dataclasses.is_dataclass(classtype):
             prms = {f.name: get_vl(f.name, f.type) for f in dataclasses.fields(classtype)}  # type: ignore
             return classtype(**prms)
-        elif hasattr(classtype, "model_validate"):
+        elif hasattr(classtype, "model_validate"):  # Pydantic 2.0
             mod: "Type[pydantic.BaseModel]" = classtype  # type: ignore
             prms = {f: get_vl(f, None) for f in mod.model_fields.keys()}
             return mod.model_validate(prms)  # type: ignore

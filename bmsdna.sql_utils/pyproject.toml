@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bmsdna-sql-utils"
-version = "0.11.7"
+version = "0.11.8"
 description = ""
 authors = ["Adrian Ehrsam <adrian.ehrsam@bmsuisse.ch>"]
 readme = "README.md"
@@ -13,7 +13,7 @@ aioodbc = { version = "^0.5.0", optional = true }
 python-tds = { version = "^1.13.0", optional = true }
 pydantic = { version = "^2.3.0", optional = true }
 aiohttp = "^3.8.5"
-requests = "^2.31.0"
+requests = ">=2.28.0"
 duckdb = { version = "^0.10.1", optional = true }
 lakeapi2sql = { version = ">=0.7.4", optional = true }
 deltalake = { version = ">=0.16.4", optional = true }
@@ -25,10 +25,10 @@ polars = { version = ">=0.20.21", optional = true }
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.325"
 black = "^23.7.0"
-pyodbc = { version = "^5.0.1" }
+pyodbc = { version = ">=4.0.0" }
 aioodbc = { version = "^0.5.0" }
 python-tds = { version = "^1.13.0" }
-pydantic = "^2.3.0"
+pydantic = ">=1.10.0"
 isort = "^5.12.0"
 pycln = "^2.4.0"
 sqlglot = ">=20.0.0"

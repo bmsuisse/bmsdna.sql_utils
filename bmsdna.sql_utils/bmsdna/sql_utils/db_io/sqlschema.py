@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, Literal, Union, Optional, Any, TYPE_CHECKING
 import logging
-
-from pydantic import BaseModel
 from bmsdna.sql_utils.lake import FieldWithType
 from bmsdna.sql_utils.query import sql_quote_name, sql_quote_value
 
