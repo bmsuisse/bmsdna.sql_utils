@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.asyncio
 async def test_logging(connection: "DB_Connection"):
-    from bmsdna.sql_utils.db_io.db_logging import init_logging
+    from bmsdna.sql_utils.db_io.db_logging import init_logging, insert_into_log
 
     with connection.new_connection() as con:
         init_logging(con)
@@ -17,6 +17,16 @@ async def test_logging(connection: "DB_Connection"):
             col_names = [c[0] for c in cur.fetchall()]
         assert "table_name" in col_names
         assert "type" in col_names
+
+        insert_into_log(con, ("dbo", "i_want_log"), "skip_load")
+        from bmsdna.sql_utils.db_io.db_logging import warned_logging
+
+        assert not warned_logging
+
+        with con.cursor() as cur:
+            cur.execute("select count(*) as cnt FROM lake_import._log")
+            cnt = cur.fetchone()[0]
+            assert cnt > 0
 
 
 @pytest.mark.asyncio
