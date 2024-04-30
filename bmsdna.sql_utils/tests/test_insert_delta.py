@@ -6,6 +6,20 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio
+async def test_logging(connection: "DB_Connection"):
+    from bmsdna.sql_utils.db_io.db_logging import init_logging
+
+    with connection.new_connection() as con:
+        init_logging(con)
+
+        with con.cursor() as cur:
+            cur.execute("select column_name from information_schema.columns where table_name='_log'")
+            col_names = [c[0] for c in cur.fetchall()]
+        assert "table_name" in col_names
+        assert "type" in col_names
+
+
+@pytest.mark.asyncio
 async def test_insert(connection: "DB_Connection"):
     from bmsdna.sql_utils import insert_into_table
     from bmsdna.sql_utils.db_io.delta_source import DeltaSource
@@ -22,7 +36,7 @@ async def test_insert(connection: "DB_Connection"):
 
     with duckdb.connect() as con:
         duckdb_create_view_for_delta(con, "tests/data/user2", "user2")
-        df2 = con.execute("SELECT * FROM user2").fetchdf()
+        df2 = con.execute('SELECT * FROM user2 ORDER BY "User_-_iD", __timestamp').fetchdf()
 
     comp = df1.compare(df2)
     assert comp.empty, comp
