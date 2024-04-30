@@ -14,7 +14,6 @@ table_name_type = Union[str, tuple[str, str]]
 
 
 def convert_to_sql_field(field: FieldWithType):
-
     sqt = get_sql_type(field["type"]["type_str"], field.get("max_str_length", None))
     return SQLField(field["name"], ex.DataType.build(sqt, dialect="tsql"))
 
@@ -33,12 +32,16 @@ def get_str_length(field: SQLField | ex.DataType):
     if len(field.expressions) != 1:
         return None
     t_zero = field.expressions[0]
-    if not isinstance(t_zero, int):
+    if not isinstance(t_zero, (float, int, str)):
         t_zero = t_zero.this
-    if not isinstance(t_zero, int):
+    if not isinstance(t_zero, (float, int, str)):
         t_zero = t_zero.this
-    assert isinstance(t_zero, int)
-    return t_zero
+    if not isinstance(t_zero, (float, int, str)):
+        t_zero = t_zero.this
+    assert isinstance(t_zero, (float, int, str)), f"cannot get string length from {str(field)}. AST: {repr(field)}"
+    if isinstance(t_zero, str) and t_zero.upper() == "MAX":
+        return -1
+    return int(t_zero)
 
 
 def get_field_col_definition(
@@ -194,6 +197,7 @@ def get_sql_for_schema(
         )
         pkdef = f", CONSTRAINT {sql_quote_name('PK_'+tbl_name_pk)}  PRIMARY KEY({pkcols})"
     create_sql = f"CREATE TABLE {sql_quote_name(table_name)}({cols}{pkdef}) "
+
     if with_exist_check:
         return f"""
             IF OBJECT_ID (N'{sql_quote_name(table_name).replace("'", "''")}', N'U') IS NULL 
@@ -251,6 +255,8 @@ def create_table(
     calculated_values: Mapping[str, str] | None = None,
     callback: list[Callable[[CreateTableCallbackParams], Any]] | None = None,
 ):
+    if not any(schema):
+        raise ValueError("Must provide at least one column")
     created = False
     truncated = False
     adjusted = False
@@ -347,6 +353,7 @@ def create_table(
                         logger.info(f"Executing alter sql: {sql}")
                         from .db_logging import insert_into_log
 
+                        print(sql)
                         insert_into_log(conn, table_name, "schema_drift", sql=sql)
                         cur.execute(sql)
 

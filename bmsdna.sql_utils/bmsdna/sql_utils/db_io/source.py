@@ -14,7 +14,13 @@ class WriteInfo:
     table_name: str | tuple[str, str]
 
 
+forbidden_cols = ["__hash", "__metadata"]
+
+
 class ImportSource(ABC):
+    def __init__(self):
+        self.forbidden_cols = forbidden_cols
+
     @abstractmethod
     async def write_to_sql_server(
         self,

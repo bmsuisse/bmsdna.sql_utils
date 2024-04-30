@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 class DB_Connection:
     def __init__(self):
+        import logging
+
+        logging.getLogger("bmsdna.sql_utils").setLevel(logging.DEBUG)
         import shutil
 
         if os.path.exists("tests/_data"):
@@ -87,6 +90,22 @@ def connection(spawn_sql):
     c = DB_Connection()
     yield c
     c.close()
+
+
+@pytest.fixture(scope="session")
+def spark_session():
+    from pyspark.sql import SparkSession
+    from delta import configure_spark_with_delta_pip
+
+    builder = (
+        SparkSession.builder.appName("test_sql_utils")  # type: ignore
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    )
+
+    spark = configure_spark_with_delta_pip(builder).getOrCreate()
+
+    return spark
 
 
 @pytest.fixture(scope="session", autouse=True)

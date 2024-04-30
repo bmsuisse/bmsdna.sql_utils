@@ -95,7 +95,7 @@ class DeltaPolarsSource(ImportSource):
         length_fields: list[str] = []
         fields: dict[str, SQLField] = dict()
         for fieldname in schema.names:
-            if fieldname.startswith("__"):
+            if fieldname in self.forbidden_cols:
                 continue
             f = schema.field(fieldname)
             t = f.type

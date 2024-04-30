@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bmsdna-sql-utils"
-version = "0.12.1"
+version = "0.12.2"
 description = ""
 authors = ["Adrian Ehrsam <adrian.ehrsam@bmsuisse.ch>"]
 readme = "README.md"
@@ -24,15 +24,15 @@ polars = { version = ">=0.20.21", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pyright = "^1.1.325"
-black = "^23.7.0"
 pyodbc = { version = ">=4.0.0" }
 aioodbc = { version = "^0.5.0" }
 python-tds = { version = "^1.13.0" }
 pydantic = ">=1.10.0"
-isort = "^5.12.0"
-pycln = "^2.4.0"
 sqlglot = ">=20.0.0"
 pyspark = "^3.5.1"
+pandas = "^2.2.2"
+delta-spark = "^3.1.0"
+ruff = "^0.4.2"
 
 
 [tool.poetry.group.test.dependencies]
@@ -44,6 +44,9 @@ pytest-cov = "^5.0.0"
 azure-identity = "^1.16.0"
 azure-storage-blob = "^12.19.1"
 python-dotenv = "^1.0.1"
+
+[pytest]
+log_cli = true
 
 [tool.poetry.extras]
 db-io = ["pyodbc", "lakeapi2sql"]
@@ -62,5 +65,5 @@ venvPath = "."
 pythonVersion = "3.10"
 typeCheckingMode = "basic"
 
-[tool.black]
+[tool.ruff]
 line-length = 119

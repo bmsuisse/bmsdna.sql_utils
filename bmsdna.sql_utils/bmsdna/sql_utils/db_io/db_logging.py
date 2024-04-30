@@ -28,6 +28,9 @@ def init_logging(conn: "pyodbc.Connection|pytds.Connection"):
     )
 
 
+warned_logging = False
+
+
 def insert_into_log(
     con: "pyodbc.Connection|pytds.Connection",
     table_name: Union[str, tuple[str, str]],
@@ -44,9 +47,15 @@ def insert_into_log(
         logger.error(f"{type} for {table_name}, {partition_filter}:\n {error}")
     else:
         logger.info(f"{type} for {table_name}, {partition_filter}")
-    with con.cursor() as cur:
-        cur.execute(
-            """INSERT INTO lake_import._log(table_name, type, insert_date, partition_filter, error, sql)
-                VALUES(?,?,GETUTCDATE(),?,?,?)""",
-            (table_name_str, type, partition_filter, error, sql),
-        )
+    try:
+        with con.cursor() as cur:
+            cur.execute(
+                """INSERT INTO lake_import._log("table_name", type, insert_date, partition_filter, error, sql)
+                    VALUES(?,?,GETUTCDATE(),?,?,?)""",
+                (table_name_str, type, partition_filter, error, sql),
+            )
+    except Exception as err:
+        global warned_logging
+        if not warned_logging:
+            warned_logging = True
+            logger.warning("Could not log to table", exc_info=err)
