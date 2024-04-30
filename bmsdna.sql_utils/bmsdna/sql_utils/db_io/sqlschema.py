@@ -33,11 +33,13 @@ def get_str_length(field: SQLField | ex.DataType):
     if len(field.expressions) != 1:
         return None
     t_zero = field.expressions[0]
-    if not isinstance(t_zero, int):
+    if not isinstance(t_zero, (float, int)):
         t_zero = t_zero.this
-    if not isinstance(t_zero, int):
+    if not isinstance(t_zero, (float, int)):
         t_zero = t_zero.this
-    assert isinstance(t_zero, int)
+    if not isinstance(t_zero, (float, int)):
+        t_zero = t_zero.this
+    assert isinstance(t_zero, (float, int)), f"cannot get string length from {str(field)}. AST: {repr(field)}"
     return t_zero
 
 

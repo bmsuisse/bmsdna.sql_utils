@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bmsdna-sql-utils"
-version = "0.12.1"
+version = "0.12.2"
 description = ""
 authors = ["Adrian Ehrsam <adrian.ehrsam@bmsuisse.ch>"]
 readme = "README.md"
@@ -33,6 +33,8 @@ isort = "^5.12.0"
 pycln = "^2.4.0"
 sqlglot = ">=20.0.0"
 pyspark = "^3.5.1"
+pandas = "^2.2.2"
+delta-spark = "^3.1.0"
 
 
 [tool.poetry.group.test.dependencies]
