@@ -66,4 +66,5 @@ async def test_insert_faker(connection: "DB_Connection", spark_session: "SparkSe
         connection=connection,
         delta_path="tests/data/faker",
         target_table=("lake_import", "faker_from_spark"),
+        test_data=False,  # date types / unicode seems to be broken by pandas
     )

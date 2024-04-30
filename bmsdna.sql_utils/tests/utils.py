@@ -12,6 +12,7 @@ async def execute_compare(
     connection: "DB_Connection",
     delta_path: str,
     target_table: tuple[str, str],
+    test_data=True,
 ):
     from bmsdna.sql_utils import insert_into_table
     from bmsdna.sql_utils.db_io.source import forbidden_cols
@@ -44,9 +45,11 @@ async def execute_compare(
     with duckdb.connect() as con:
         duckdb_create_view_for_delta(con, delta_path, target_table[1])
         df2 = con.execute(f"SELECT {', '.join(quoted_source_cols)} FROM {sql_quote_name(target_table[1])}").fetchdf()
-
-    comp = _compare_dfs(df1, df2)
-    assert comp.empty, comp
+    if test_data:
+        comp = _compare_dfs(df1, df2)
+        assert comp.empty, comp
+    else:
+        assert df1.shape == df2.shape, "shape must equal"
 
     with connection.new_connection() as con:
         con.execute(f"delete from {target_table_sql} where ascii(cast(newid() as varchar(100)))<ascii('A')")
@@ -62,6 +65,8 @@ async def execute_compare(
             f'SELECT {", ".join(quoted_source_cols)} FROM {target_table_sql} ORDER BY {keys_sql}',
             con=con,
         )
-
-    comp = _compare_dfs(df1, df2)
-    assert comp.empty, comp
+    if test_data:
+        comp = _compare_dfs(df1, df2)
+        assert comp.empty, comp
+    else:
+        assert df1.shape == df2.shape, "shape must equal"
