@@ -13,19 +13,13 @@ def _getenvs():
         lines = f.readlines()
         envs = {
             item[0].strip(): item[1].strip()
-            for item in [
-                line.split("=")
-                for line in lines
-                if len(line.strip()) > 0 and not line.startswith("#")
-            ]
+            for item in [line.split("=") for line in lines if len(line.strip()) > 0 and not line.startswith("#")]
         }
     return envs
 
 
 def start_mssql_server() -> Container:
-    client = (
-        docker.from_env()
-    )  # code taken from https://github.com/fsspec/adlfs/blob/main/adlfs/tests/conftest.py#L72
+    client = docker.from_env()  # code taken from https://github.com/fsspec/adlfs/blob/main/adlfs/tests/conftest.py#L72
     sql_server: Container | None = None
     try:
         m = cast(Container, client.containers.get("test4sql_odbc2deltalake"))
@@ -73,9 +67,7 @@ def create_test_blobstorage():
 
 
 def start_azurite() -> Container:
-    client = (
-        docker.from_env()
-    )  # code taken from https://github.com/fsspec/adlfs/blob/main/adlfs/tests/conftest.py#L72
+    client = docker.from_env()  # code taken from https://github.com/fsspec/adlfs/blob/main/adlfs/tests/conftest.py#L72
     azurite_server: Container | None = None
     try:
         m = cast(Container, client.containers.get("test4azurite"))

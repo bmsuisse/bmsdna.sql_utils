@@ -85,18 +85,15 @@ def sql_quote_value(vl: Any):
 
 
 @overload
-def get_compatible_name(name: str) -> str:
-    ...
+def get_compatible_name(name: str) -> str: ...
 
 
 @overload
-def get_compatible_name(name: tuple[str, str]) -> tuple[str, str]:
-    ...
+def get_compatible_name(name: tuple[str, str]) -> tuple[str, str]: ...
 
 
 @overload
-def get_compatible_name(name: tuple[str, str, str]) -> tuple[str, str, str]:
-    ...
+def get_compatible_name(name: tuple[str, str, str]) -> tuple[str, str, str]: ...
 
 
 def get_compatible_name(name: SQLObjectNameType) -> SQLObjectNameType:

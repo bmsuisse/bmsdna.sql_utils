@@ -14,7 +14,6 @@ table_name_type = Union[str, tuple[str, str]]
 
 
 def convert_to_sql_field(field: FieldWithType):
-
     sqt = get_sql_type(field["type"]["type_str"], field.get("max_str_length", None))
     return SQLField(field["name"], ex.DataType.build(sqt, dialect="tsql"))
 
