@@ -12,6 +12,7 @@ async def test_insert(connection: "DB_Connection", spark_session: "SparkSession"
     from bmsdna.sql_utils.db_io.source_spark import SourceSpark
     from bmsdna.sql_utils.db_io.source import forbidden_cols
     import pandas as pd
+    import os
     from deltalake2db import duckdb_create_view_for_delta
 
     import duckdb
@@ -21,7 +22,10 @@ async def test_insert(connection: "DB_Connection", spark_session: "SparkSession"
         df2_c = df2.reset_index(drop=True).sort_values(by=["User_-_iD", "__timestamp"], ignore_index=True)
         return df1_c.compare(df2_c)
 
-    df = spark_session.sql("select * from default.user2")
+    df = spark_session.sql(
+        f"select * from delta.`{os.path.abspath('tests/data/delta-table')}` order by \"User_-_iD\", __timestamp"
+    )
+    assert len(df.columns) > 0, "columns for user2"
     source_cols = [f for f in df.columns if f not in forbidden_cols]
     quoted_source_cols = [f"{c}" for c in source_cols]
     s = SourceSpark(df)

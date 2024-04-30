@@ -255,6 +255,8 @@ def create_table(
     calculated_values: Mapping[str, str] | None = None,
     callback: list[Callable[[CreateTableCallbackParams], Any]] | None = None,
 ):
+    if not any(schema):
+        raise ValueError("Must provide at least one column")
     created = False
     truncated = False
     adjusted = False
@@ -368,7 +370,6 @@ def create_table(
         logger.info(f"Executing sql: {sql}")
         from .db_logging import insert_into_log
 
-        print(sql)
         cur.execute(sql)
         if not overwrite:
             from bmsdna.sql_utils.db_helper import get_one_real_row
