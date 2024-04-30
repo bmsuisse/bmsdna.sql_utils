@@ -25,7 +25,7 @@ async def test_logging(connection: "DB_Connection"):
 
         with con.cursor() as cur:
             cur.execute("select count(*) as cnt FROM lake_import._log")
-            cnt = cur.fetchone()[0]
+            cnt = cur.fetchall()[0][0]
             assert cnt > 0
 
 
