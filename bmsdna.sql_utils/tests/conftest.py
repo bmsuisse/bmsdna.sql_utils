@@ -101,6 +101,16 @@ def spark_session():
     )
 
     spark = configure_spark_with_delta_pip(builder).getOrCreate()
+    spark.sql(
+        """CREATE TABLE default.user2
+USING DELTA
+LOCATION 'tests/data/user2'"""
+    )
+    spark.sql(
+        """CREATE TABLE default.delta_table
+    USING DELTA
+    LOCATION 'tests/data/delta-table'"""
+    )
     return spark
 
 
