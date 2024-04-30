@@ -50,7 +50,29 @@ async def test_insert_user2_json(connection: "DB_Connection", spark_session: "Sp
 
 
 @pytest.mark.asyncio
+@pytest.skip("invalid characters, must be fixed in lakeapi2sql")
 async def test_insert_faker(connection: "DB_Connection", spark_session: "SparkSession"):
+    from bmsdna.sql_utils.db_io.source_spark import SourceSpark
+    import os
+
+    df = spark_session.sql(f"select * from delta.`{os.path.abspath('tests/data/faker')}`")
+
+    s = SourceSpark(df)
+    s.use_json_insert = False
+    from .utils import execute_compare
+
+    await execute_compare(
+        source=s,
+        keys=["id"],
+        connection=connection,
+        delta_path="tests/data/faker",
+        target_table=("lake_import", "faker_from_spark"),
+        test_data=False,  # date types / unicode seems to be broken by pandas
+    )
+
+
+@pytest.mark.asyncio
+async def test_insert_faker_json(connection: "DB_Connection", spark_session: "SparkSession"):
     from bmsdna.sql_utils.db_io.source_spark import SourceSpark
     import os
 

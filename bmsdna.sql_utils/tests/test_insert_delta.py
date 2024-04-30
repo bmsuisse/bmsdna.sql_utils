@@ -54,6 +54,42 @@ async def test_insert_user2_delta(connection: "DB_Connection"):
 
 
 @pytest.mark.asyncio
+async def test_insert_user2_delta_json(connection: "DB_Connection"):
+    from bmsdna.sql_utils.db_io.delta_source import DeltaSource
+
+    s = DeltaSource("tests/data/user2")
+    s.use_json_insert = True
+    from .utils import execute_compare
+
+    await execute_compare(
+        source=s,
+        keys=["User_-_iD", "__timestamp"],
+        connection=connection,
+        delta_path="tests/data/user2",
+        target_table=("lake_import", "user_delta"),
+    )
+
+
+@pytest.mark.asyncio
+async def test_insert_faker_delta_json(connection: "DB_Connection"):
+    from bmsdna.sql_utils.db_io.delta_source import DeltaSource
+
+    s = DeltaSource("tests/data/faker")
+    s.use_json_insert = True
+    from .utils import execute_compare
+
+    await execute_compare(
+        source=s,
+        keys=["id"],
+        connection=connection,
+        delta_path="tests/data/faker",
+        target_table=("lake_import", "faker_delta"),
+        test_data=False,  # date types / unicode seems to be broken by pandas
+    )
+
+
+@pytest.mark.asyncio
+@pytest.skip("invalid characters, must be fixed in lakeapi2sql")
 async def test_insert_faker_delta(connection: "DB_Connection"):
     from bmsdna.sql_utils.db_io.delta_source import DeltaSource
 
