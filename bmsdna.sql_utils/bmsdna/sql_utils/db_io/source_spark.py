@@ -75,7 +75,14 @@ class SourceSpark(ImportSource):
 
     def get_schema(self) -> list[SQLField]:
         fields = self.df.schema.fields
-        return [SQLField(f.name, ex.DataType.build(str(f.dataType.simpleString()), dialect="spark")) for f in fields]
+
+        def sqlglot_type(dtype):
+            simple_str = str(dtype.simpleString())
+            if simple_str == "timestamp_ntz":
+                return ex.DataType.build("datetime2", dialect="tsql")  # more or less
+            return ex.DataType.build(simple_str, dialect="spark")
+
+        return [SQLField(f.name, sqlglot_type(f.dataType)) for f in fields]
 
     def get_last_change_date(self):
         if self.change_date:
