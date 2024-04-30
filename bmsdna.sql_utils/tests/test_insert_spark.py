@@ -49,7 +49,7 @@ async def test_insert(connection: "DB_Connection", spark_session: "SparkSession"
         con.execute('delete from lake_import.user_from_spark where "User_-_iD" IN(1,2,4)')
 
     await insert_into_table(
-        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_from_spark")
+        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_from_spark"), force=True
     )
     with connection.new_connection() as con:
         df1 = pd.read_sql(

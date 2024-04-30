@@ -45,6 +45,7 @@ async def test_insert(connection: "DB_Connection"):
     import pandas as pd
     from deltalake2db import duckdb_create_view_for_delta
     import duckdb
+    import time
 
     def _compare_dfs(df1, df2):
         df1_c = df1.reset_index(drop=True).sort_values(by=["User_-_iD", "__timestamp"], ignore_index=True)
@@ -73,12 +74,12 @@ async def test_insert(connection: "DB_Connection"):
 
     comp = _compare_dfs(df1, df2)
     assert comp.empty, comp
-
+    time.sleep(1)
     with connection.new_connection() as con:
         con.execute('delete from lake_import.user_not_existing where "User_-_iD" IN(1,2,4)')
 
     await insert_into_table(
-        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_not_existing")
+        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_not_existing"), force=True
     )
     with connection.new_connection() as con:
         df1 = pd.read_sql(
