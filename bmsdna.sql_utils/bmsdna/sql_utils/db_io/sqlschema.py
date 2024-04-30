@@ -198,6 +198,7 @@ def get_sql_for_schema(
         )
         pkdef = f", CONSTRAINT {sql_quote_name('PK_'+tbl_name_pk)}  PRIMARY KEY({pkcols})"
     create_sql = f"CREATE TABLE {sql_quote_name(table_name)}({cols}{pkdef}) "
+
     if with_exist_check:
         return f"""
             IF OBJECT_ID (N'{sql_quote_name(table_name).replace("'", "''")}', N'U') IS NULL 
@@ -210,6 +211,7 @@ def get_sql_for_schema(
                 select 'nothing' as action
             end 
         """
+    print(create_sql)
     return create_sql
 
 
