@@ -23,18 +23,18 @@ async def test_insert(connection: "DB_Connection", spark_session: "SparkSession"
         return df1_c.compare(df2_c)
 
     df = spark_session.sql(
-        f"select * from delta.`{os.path.abspath('tests/data/delta-table')}` order by \"User_-_iD\", __timestamp"
+        f"select * from delta.`{os.path.abspath('tests/data/user2')}` order by \"User_-_iD\", __timestamp"
     )
     assert len(df.columns) > 0, "columns for user2"
     source_cols = [f for f in df.columns if f not in forbidden_cols]
     quoted_source_cols = [f"{c}" for c in source_cols]
     s = SourceSpark(df)
     await insert_into_table(
-        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_not_existing")
+        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_from_spark")
     )
     with connection.new_connection() as con:
         df1 = pd.read_sql(
-            f'SELECT {", ".join(quoted_source_cols)} FROM lake_import.user_not_existing ORDER BY "User_-_iD", __timestamp',
+            f'SELECT {", ".join(quoted_source_cols)} FROM lake_import.user_from_spark ORDER BY "User_-_iD", __timestamp',
             con=con,
         )
 
@@ -46,14 +46,14 @@ async def test_insert(connection: "DB_Connection", spark_session: "SparkSession"
     assert comp.empty, comp
 
     with connection.new_connection() as con:
-        con.execute('delete from lake_import.user_not_existing where "User_-_iD" IN(1,2,4)')
+        con.execute('delete from lake_import.user_from_spark where "User_-_iD" IN(1,2,4)')
 
     await insert_into_table(
-        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_not_existing")
+        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_from_spark")
     )
     with connection.new_connection() as con:
         df1 = pd.read_sql(
-            f'SELECT {", ".join(quoted_source_cols)} FROM lake_import.user_not_existing ORDER BY "User_-_iD", __timestamp',
+            f'SELECT {", ".join(quoted_source_cols)} FROM lake_import.user_from_spark ORDER BY "User_-_iD", __timestamp',
             con=con,
         )
 
