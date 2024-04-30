@@ -89,7 +89,7 @@ async def test_insert_faker_delta_json(connection: "DB_Connection"):
 
 
 @pytest.mark.asyncio
-@pytest.skip("invalid characters, must be fixed in lakeapi2sql")
+@pytest.mark.skip("invalid characters, must be fixed in lakeapi2sql")
 async def test_insert_faker_delta(connection: "DB_Connection"):
     from bmsdna.sql_utils.db_io.delta_source import DeltaSource
 

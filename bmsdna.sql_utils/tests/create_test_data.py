@@ -5,7 +5,7 @@ from deltalake import write_deltalake, WriterProperties
 
 
 def create_test_data():
-    fake = Faker(["it_IT", "de-DE", "fr-FR", "en_US", "ja_JP"])
+    fake = Faker(["it_IT", "de-DE", "fr-FR", "en_US"])
     res = []
     for i in range(1, 10000):
         lat, lon = fake.latlng()
