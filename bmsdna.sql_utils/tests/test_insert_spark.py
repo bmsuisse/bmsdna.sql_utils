@@ -27,7 +27,7 @@ async def test_insert(connection: "DB_Connection", spark_session: "SparkSession"
     )
     assert len(df.columns) > 0, "columns for user2"
     source_cols = [f for f in df.columns if f not in forbidden_cols]
-    quoted_source_cols = [f"{c}" for c in source_cols]
+    quoted_source_cols = [f'"{c}"' for c in source_cols]
     s = SourceSpark(df)
     await insert_into_table(
         source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_from_spark")
