@@ -545,9 +545,7 @@ async def insert_into_table(
                 select = select or [
                     f.column_name
                     for f in schema
-                    if not f.column_name.startswith("__")
-                    and f.column_name not in constant_values.keys()
-                    and f.column_name not in calculated_columns.keys()
+                    if f.column_name not in constant_values.keys() and f.column_name not in calculated_columns.keys()
                 ]
                 table_sql.append(sql)
             prom = insert_into_table_partition(
@@ -597,11 +595,7 @@ async def insert_into_table(
     else:
         constant_values = source.get_constant_values(None, select=select)
 
-        select = select or [
-            f.column_name
-            for f in schema
-            if not f.column_name.startswith("__") and f.column_name not in constant_values.keys()
-        ]
+        select = select or [f.column_name for f in schema if f.column_name not in constant_values.keys()]
         await insert_into_table_partition(
             target_table=target_table,
             source=source,
