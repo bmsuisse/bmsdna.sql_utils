@@ -211,7 +211,6 @@ def get_sql_for_schema(
                 select 'nothing' as action
             end 
         """
-    print(create_sql)
     return create_sql
 
 
@@ -353,6 +352,7 @@ def create_table(
                         logger.info(f"Executing alter sql: {sql}")
                         from .db_logging import insert_into_log
 
+                        print(sql)
                         insert_into_log(conn, table_name, "schema_drift", sql=sql)
                         cur.execute(sql)
 
@@ -369,6 +369,7 @@ def create_table(
         logger.info(f"Executing sql: {sql}")
         from .db_logging import insert_into_log
 
+        print(sql)
         cur.execute(sql)
         if not overwrite:
             from bmsdna.sql_utils.db_helper import get_one_real_row

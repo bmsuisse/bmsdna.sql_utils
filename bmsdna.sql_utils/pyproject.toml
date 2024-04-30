@@ -45,6 +45,9 @@ azure-identity = "^1.16.0"
 azure-storage-blob = "^12.19.1"
 python-dotenv = "^1.0.1"
 
+[pytest]
+log_cli = true
+
 [tool.poetry.extras]
 db-io = ["pyodbc", "lakeapi2sql"]
 delta = ["duckdb", "deltalake"]

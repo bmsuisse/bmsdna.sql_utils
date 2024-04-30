@@ -46,6 +46,11 @@ async def test_insert(connection: "DB_Connection"):
     from deltalake2db import duckdb_create_view_for_delta
     import duckdb
 
+    def _compare_dfs(df1, df2):
+        df1_c = df1.reset_index(drop=True).sort_values(by=["User_-_iD", "__timestamp"], ignore_index=True)
+        df2_c = df2.reset_index(drop=True).sort_values(by=["User_-_iD", "__timestamp"], ignore_index=True)
+        return df1_c.compare(df2_c)
+
     s = DeltaSource("tests/data/user2")
     source_cols = [f.name for f in s.delta_lake.schema().fields if f.name not in forbidden_cols]
     quoted_source_cols = [f'"{c}"' for c in source_cols]
@@ -66,7 +71,7 @@ async def test_insert(connection: "DB_Connection"):
             .reset_index(drop=True)
         )
 
-    comp = df1.compare(df2)
+    comp = _compare_dfs(df1, df2)
     assert comp.empty, comp
 
     with connection.new_connection() as con:
@@ -80,5 +85,5 @@ async def test_insert(connection: "DB_Connection"):
             'SELECT * FROM lake_import.user_not_existing ORDER BY "User_-_iD", __timestamp', con=con
         ).reset_index(drop=True)
 
-    comp = df1.compare(df2)
+    comp = _compare_dfs(df1, df2)
     assert comp.empty, comp

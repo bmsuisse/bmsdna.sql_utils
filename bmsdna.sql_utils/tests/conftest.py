@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 class DB_Connection:
     def __init__(self):
+        import logging
+
+        logging.getLogger("bmsdna.sql_utils").setLevel(logging.DEBUG)
         import shutil
 
         if os.path.exists("tests/_data"):
