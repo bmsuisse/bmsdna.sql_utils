@@ -80,6 +80,10 @@ class SourceSpark(ImportSource):
             simple_str = str(dtype.simpleString())
             if simple_str == "timestamp_ntz":
                 return ex.DataType.build("datetime2", dialect="tsql")  # more or less
+            if simple_str.startswith("date32[") or simple_str == "date32":
+                return ex.DataType.build("date", dialect="tsql")
+            if simple_str.startswith("date64[") or simple_str == "date64":
+                return ex.DataType.build("date", dialect="tsql")
             return ex.DataType.build(simple_str, dialect="spark")
 
         return [SQLField(f.name, sqlglot_type(f.dataType)) for f in fields]

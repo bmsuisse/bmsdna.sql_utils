@@ -12,6 +12,10 @@ def recursive_get_type(t: "DataType", jsonify_complex: bool, dialect: str = "spa
 
     if pat.is_decimal(t):
         return ex.DataType.build(f"decimal({t.precision},{t.scale})", dialect="spark")
+    if pat.is_date(t):
+        return ex.DataType.build("date", dialect="tsql")
+    if pat.is_timestamp(t):
+        return ex.DataType.build("datetime2", dialect="tsql")
     if pat.is_null(t):
         return ex.DataType.build("null")
     is_complex = pa.types.is_nested(t)

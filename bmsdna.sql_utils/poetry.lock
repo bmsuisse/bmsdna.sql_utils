@@ -695,6 +695,20 @@ files = [
 test = ["pytest (>=6)"]
 
 [[package]]
+name = "faker"
+version = "25.0.0"
+description = "Faker is a Python package that generates fake data for you."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "Faker-25.0.0-py3-none-any.whl", hash = "sha256:e23a2b74888885c3d23a9237bacb823041291c03d609a39acb9ebe6c123f3986"},
+    {file = "Faker-25.0.0.tar.gz", hash = "sha256:87ef41e24b39a5be66ecd874af86f77eebd26782a2681200e86c5326340a95d3"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.4"
+
+[[package]]
 name = "frozenlist"
 version = "1.4.1"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -837,18 +851,18 @@ six = "*"
 
 [[package]]
 name = "lakeapi2sql"
-version = "0.8.2"
+version = "0.8.3"
 description = ""
 optional = true
 python-versions = ">=3.10"
 files = [
-    {file = "lakeapi2sql-0.8.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:e6e1083c4ef46627bc809a2498548fe6dfbb62e4219e11b29a008d2945002255"},
-    {file = "lakeapi2sql-0.8.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:43239bf3f149f6b76189e7c5a88c8cbf09c640af55a9c753fc4e344e0cda280a"},
-    {file = "lakeapi2sql-0.8.2-cp310-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:e02b3af1e5f79d5761e33c3463c4cdce64ec65ef8ad232850ccbcab745f73673"},
-    {file = "lakeapi2sql-0.8.2-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5e5ba24d972624fa6eda23b842e68e7497e0eb1a01a89441d0774076b18eef6f"},
-    {file = "lakeapi2sql-0.8.2-cp310-abi3-win32.whl", hash = "sha256:32c4be79e87d45c4c6d424851c76dcd951f76df29aa51315a5d76d799f2bd31c"},
-    {file = "lakeapi2sql-0.8.2-cp310-abi3-win_amd64.whl", hash = "sha256:71086dffb859dc4a578f0b4cf6d6d03ef92d9380719c0360ab1fc8eeb47a710f"},
-    {file = "lakeapi2sql-0.8.2.tar.gz", hash = "sha256:de93dd9d240af4d62693e980b53ace639d15447a525ef8f5a9d58b194aaca629"},
+    {file = "lakeapi2sql-0.8.3-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:052a467edbca28f1448ab11e550e301a781c79f8a4eeda0c7fdf1794f9c6bbd0"},
+    {file = "lakeapi2sql-0.8.3-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:1340ee05faf0c0343b358c8395116690f2e9ea342024dd9e27724b3c7f2e8be1"},
+    {file = "lakeapi2sql-0.8.3-cp310-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:d4fe46d36387b8ba2d02457043f2f4877167b74f4e4597ec035112e862829797"},
+    {file = "lakeapi2sql-0.8.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:800ecd550b177b4dd1ddece33d723d7d9ed73817cf38bdd697e3714b6356d2c9"},
+    {file = "lakeapi2sql-0.8.3-cp310-abi3-win32.whl", hash = "sha256:0e939552f49c848bbf54a1d60c5179b8e2adac20a387fd0c8634a5f202083aa1"},
+    {file = "lakeapi2sql-0.8.3-cp310-abi3-win_amd64.whl", hash = "sha256:15b56e11b23c26849980e07ee651317e603d7320ad1fdaae861fa982d4b79a98"},
+    {file = "lakeapi2sql-0.8.3.tar.gz", hash = "sha256:2c63e4d9fa5b4c784b9a66f31bb3ffe9382de6c8565eda0a89d93e81764a71d8"},
 ]
 
 [package.dependencies]
@@ -1719,13 +1733,13 @@ files = [
 
 [[package]]
 name = "sqlglot"
-version = "23.12.1"
+version = "23.12.2"
 description = "An easily customizable SQL parser and transpiler"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "sqlglot-23.12.1-py3-none-any.whl", hash = "sha256:eff649a190e4c48db427c6353b542eec05db496a56f06b23b70d4be26f09328c"},
-    {file = "sqlglot-23.12.1.tar.gz", hash = "sha256:eb8e0142ce160927c9b83585b2ef550b8aba6512e3058237f86479bec7b241e5"},
+    {file = "sqlglot-23.12.2-py3-none-any.whl", hash = "sha256:5d63006a802482ab49a4f2e848cecb17edc4ba920395c1f226c8e7ad48fac874"},
+    {file = "sqlglot-23.12.2.tar.gz", hash = "sha256:3d887c3841d615fc97f02df73b441514ebe20576afffdf145019212a4c37e4a8"},
 ]
 
 [package.extras]
@@ -1909,4 +1923,4 @@ polars = ["polars"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "cbda28366e6e97b874d6697a216100c799c358b8d8cfdaa7bc4f3d0c09f35363"
+content-hash = "da8901a2c40f898e7359f5b11f6052d69214f4036dc6b56d2135bcc10a7e62ec"

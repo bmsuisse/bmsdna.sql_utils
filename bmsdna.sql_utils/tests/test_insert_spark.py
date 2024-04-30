@@ -7,55 +7,86 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio
-async def test_insert(connection: "DB_Connection", spark_session: "SparkSession"):
-    from bmsdna.sql_utils import insert_into_table
+async def test_insert_user2(connection: "DB_Connection", spark_session: "SparkSession"):
     from bmsdna.sql_utils.db_io.source_spark import SourceSpark
-    from bmsdna.sql_utils.db_io.source import forbidden_cols
-    import pandas as pd
     import os
-    from deltalake2db import duckdb_create_view_for_delta
-
-    import duckdb
-
-    def _compare_dfs(df1, df2):
-        df1_c = df1.reset_index(drop=True).sort_values(by=["User_-_iD", "__timestamp"], ignore_index=True)
-        df2_c = df2.reset_index(drop=True).sort_values(by=["User_-_iD", "__timestamp"], ignore_index=True)
-        return df1_c.compare(df2_c)
 
     df = spark_session.sql(
         f"select * from delta.`{os.path.abspath('tests/data/user2')}` order by \"User_-_iD\", __timestamp"
     )
-    assert len(df.columns) > 0, "columns for user2"
-    source_cols = [f for f in df.columns if f not in forbidden_cols]
-    quoted_source_cols = [f'"{c}"' for c in source_cols]
+
     s = SourceSpark(df)
-    await insert_into_table(
-        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_from_spark")
+    from .utils import execute_compare
+
+    await execute_compare(
+        source=s,
+        keys=["User_-_iD", "__timestamp"],
+        connection=connection,
+        delta_path="tests/data/user2",
+        target_table=("lake_import", "user_from_spark"),
     )
-    with connection.new_connection() as con:
-        df1 = pd.read_sql(
-            f'SELECT {", ".join(quoted_source_cols)} FROM lake_import.user_from_spark ORDER BY "User_-_iD", __timestamp',
-            con=con,
-        )
 
-    with duckdb.connect() as con:
-        duckdb_create_view_for_delta(con, "tests/data/user2", "user2")
-        df2 = con.execute(f"SELECT {', '.join(quoted_source_cols)} FROM user2").fetchdf()
 
-    comp = _compare_dfs(df1, df2)
-    assert comp.empty, comp
+@pytest.mark.asyncio
+async def test_insert_user2_json(connection: "DB_Connection", spark_session: "SparkSession"):
+    from bmsdna.sql_utils.db_io.source_spark import SourceSpark
+    import os
 
-    with connection.new_connection() as con:
-        con.execute('delete from lake_import.user_from_spark where "User_-_iD" IN(1,2,4)')
-
-    await insert_into_table(
-        source=s, connection_string=connection.conn_str, target_table=("lake_import", "user_from_spark"), force=True
+    df = spark_session.sql(
+        f"select * from delta.`{os.path.abspath('tests/data/user2')}` order by \"User_-_iD\", __timestamp"
     )
-    with connection.new_connection() as con:
-        df1 = pd.read_sql(
-            f'SELECT {", ".join(quoted_source_cols)} FROM lake_import.user_from_spark ORDER BY "User_-_iD", __timestamp',
-            con=con,
-        )
 
-    comp = _compare_dfs(df1, df2)
-    assert comp.empty, comp
+    s = SourceSpark(df)
+    s.use_json_insert = True
+    from .utils import execute_compare
+
+    await execute_compare(
+        source=s,
+        keys=["User_-_iD", "__timestamp"],
+        connection=connection,
+        delta_path="tests/data/user2",
+        target_table=("lake_import", "user_from_spark"),
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip("invalid characters, must be fixed in lakeapi2sql")
+async def test_insert_faker(connection: "DB_Connection", spark_session: "SparkSession"):
+    from bmsdna.sql_utils.db_io.source_spark import SourceSpark
+    import os
+
+    df = spark_session.sql(f"select * from delta.`{os.path.abspath('tests/data/faker')}`")
+
+    s = SourceSpark(df)
+    s.use_json_insert = False
+    from .utils import execute_compare
+
+    await execute_compare(
+        source=s,
+        keys=["id"],
+        connection=connection,
+        delta_path="tests/data/faker",
+        target_table=("lake_import", "faker_from_spark"),
+        test_data=False,  # date types / unicode seems to be broken by pandas
+    )
+
+
+@pytest.mark.asyncio
+async def test_insert_faker_json(connection: "DB_Connection", spark_session: "SparkSession"):
+    from bmsdna.sql_utils.db_io.source_spark import SourceSpark
+    import os
+
+    df = spark_session.sql(f"select * from delta.`{os.path.abspath('tests/data/faker')}`")
+
+    s = SourceSpark(df)
+    s.use_json_insert = True
+    from .utils import execute_compare
+
+    await execute_compare(
+        source=s,
+        keys=["id"],
+        connection=connection,
+        delta_path="tests/data/faker",
+        target_table=("lake_import", "faker_from_spark"),
+        test_data=False,  # date types / unicode seems to be broken by pandas
+    )
