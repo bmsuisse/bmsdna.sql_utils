@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 class SourceSpark(ImportSource):
-    def __init__(self, df: "DataFrame", use_json_insert=False, change_date: datetime | None = None) -> None:
+    def __init__(
+        self,
+        df: "DataFrame",
+        use_json_insert=False,
+        change_date: datetime | None = None,
+    ) -> None:
         super().__init__()
 
         self._schema: list[SQLField] | None = None
@@ -42,25 +47,41 @@ class SourceSpark(ImportSource):
 
             for k, v in partition_filters.items():
                 p_df = p_df.filter(col(k) == lit(v))
-        tbl = pa.Table.from_pandas(p_df.toPandas())
-
-        record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
         from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
 
         table_str = target_table if isinstance(target_table, str) else target_table[0] + "." + target_table[1]
         connection_string_sql = build_connection_string(connection_string, odbc=False)
         if self.use_json_insert:
-            from .json_insert import insert_into_table_via_json_from_batches
+            from .json_insert import insert_into_table_via_json
+
+            iter = p_df.toJSON().toLocalIterator()
+
+            async def _to_batches():
+                ls = []
+                for row in iter:
+                    ls.append(row)
+                    if len(ls) > 1000:
+                        yield "[" + "\n, ".join(ls) + "]"
+                        ls = []
+                if ls:
+                    yield "[" + "\n, ".join(ls) + "]"
+
             import pyodbc
 
             with pyodbc.connect(build_connection_string(connection_string, odbc=True)) as con:
                 schema = self.get_schema()
                 filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
-                await insert_into_table_via_json_from_batches(
-                    reader=record_batch_reader, table_name=target_table, connection=con, schema=filtered_schema
+                await insert_into_table_via_json(
+                    json_batches=_to_batches(),
+                    table_name=target_table,
+                    connection=con,
+                    schema=filtered_schema,
                 )
                 col_names = [f.column_name for f in filtered_schema]
         else:
+            tbl = pa.Table.from_pandas(p_df.toPandas())
+
+            record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
             res = await insert_record_batch_to_sql(connection_string_sql, table_str, record_batch_reader, select)
             col_names = [f["name"] for f in res["fields"]]
         return WriteInfo(column_names=col_names, table_name=target_table)
