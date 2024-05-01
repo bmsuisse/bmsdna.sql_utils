@@ -134,6 +134,8 @@ def get_col_definition(
     sql_type = field.data_type.sql("tsql")
     if sql_type.startswith("varchar") or sql_type.startswith("char"):
         sql_type = "n" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
+    if sql_type.startswith("VARCHAR") or sql_type.startswith("CHAR"):
+        sql_type = "N" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
     definit = sql_quote_name(field.column_name) + " " + sql_type + (" NOT NULL" if not nullable else "")
     if default is not None and default.lower() != "null":
         definit += " DEFAULT (" + default + ")"
@@ -154,6 +156,8 @@ def sql_quote_value_with_type(field: FieldWithType | SQLField, value: Any) -> st
         return sql_quote_value(value)  # string / int32 are defaults for sql server
     sql_type = field.data_type.sql("tsql")
     if sql_type.startswith("varchar") or sql_type.startswith("char"):
+        sql_type = "n" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
+    if sql_type.startswith("VARCHAR") or sql_type.startswith("CHAR"):
         sql_type = "n" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
     if value is not None:
         return f"CAST({sql_quote_value(value)} as {sql_type})"
@@ -233,10 +237,14 @@ def col_approx_eq(type1: str, type2: str | ex.DataType | ex.DataType.Type):
     if isinstance(type2, ex.DataType.Type):
         type2 = str(type2).lower()
     elif isinstance(type2, ex.DataType):
-        type2 = str(type2.type).lower()
-    if type1 in ["varchar", "nvarchar"] and type2 in ["varchar", "nvarchar"]:
+        type2 = str(type2).lower()
+    if "(" in type1:
+        type1 = type1[: type1.find("(")]
+    if "(" in type2:
+        type2 = type2[: type2.find("(")]
+    if type1.lower() in ["varchar", "nvarchar"] and type2.lower() in ["varchar", "nvarchar"]:
         return True
-    return False
+    return type1 == type2
 
 
 @dataclass(frozen=True)
