@@ -238,7 +238,11 @@ def col_approx_eq(type1: str, type2: str | ex.DataType | ex.DataType.Type):
         type2 = str(type2).lower()
     elif isinstance(type2, ex.DataType):
         type2 = str(type2.type).lower()
-    if type1 in ["varchar", "nvarchar"] and type2 in ["varchar", "nvarchar"]:
+    if "(" in type1:
+        type1 = type1[: type1.find("(")]
+    if "(" in type2:
+        type2 = type2[: type2.find("(")]
+    if type1.lower() in ["varchar", "nvarchar"] and type2.lower() in ["varchar", "nvarchar"]:
         return True
     return False
 
