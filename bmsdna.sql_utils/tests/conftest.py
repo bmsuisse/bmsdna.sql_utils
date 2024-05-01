@@ -14,6 +14,8 @@ class DB_Connection:
         import logging
 
         logging.getLogger("bmsdna.sql_utils").setLevel(logging.DEBUG)
+        logging.getLogger("lakeapi2sql").setLevel(logging.DEBUG)
+        logging.getLogger("tiberius").setLevel(logging.DEBUG)
         import shutil
 
         if os.path.exists("tests/_data"):
