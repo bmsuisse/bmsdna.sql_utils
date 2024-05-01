@@ -111,14 +111,14 @@ class SourceSpark(ImportSource):
         sql_lens = []
         length_fields = []
         for field in schema:
-            if field.data_type.this in ex.DataType.TEXT_TYPES:
+            from pyspark.sql.functions import col, length, max
+
+            if field.data_type.this in ex.DataType.TEXT_TYPES or str(field.data_type).lower() == "string":
                 length_fields.append(field.column_name)
-                sql_lens.append(
-                    f"MAX(LEN({sql_quote_name(field.column_name)})) as {sql_quote_name(field.column_name)}"
-                )
+                sql_lens.append(max(length(col(field.column_name))).alias(field.column_name))
 
         if sql_lens:
-            lengths = self.df.selectExpr(*sql_lens).collect()[0].asDict()
+            lengths = self.df.select(*sql_lens).collect()[0].asDict()
             new_schema: list[SQLField] = []
             for field in schema:
                 if field.column_name in length_fields:
