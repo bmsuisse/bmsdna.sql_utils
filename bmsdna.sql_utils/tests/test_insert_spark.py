@@ -50,7 +50,7 @@ async def test_insert_user2_json(connection: "DB_Connection", spark_session: "Sp
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip("invalid characters, must be fixed in lakeapi2sql")
+# @pytest.mark.skip("invalid characters, must be fixed in lakeapi2sql")
 async def test_insert_faker(connection: "DB_Connection", spark_session: "SparkSession"):
     from bmsdna.sql_utils.db_io.source_spark import SourceSpark
     import os
