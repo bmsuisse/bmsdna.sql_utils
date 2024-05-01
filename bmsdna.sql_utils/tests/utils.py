@@ -1,4 +1,6 @@
 from typing import TYPE_CHECKING
+from polars.testing import assert_frame_equal
+import polars as pl
 
 if TYPE_CHECKING:
     from bmsdna.sql_utils.db_io.source import ImportSource
@@ -27,13 +29,17 @@ async def execute_compare(
 
     import duckdb
 
+    def _cast_dt(dt: pl.DataFrame):
+        for col in dt.get_columns():
+            if isinstance(col.dtype, pl.Datetime) and (col.dtype.time_unit != "ms" or col.dtype.time_zone != "UTC"):
+                dt = dt.with_columns(**{col.name: dt[col.name].cast(pl.Datetime("ms", "UTC"))})
+        return dt
+
     def _compare_dfs(df1, df2):
         df1_c = df1.reset_index(drop=True).sort_values(by=keys, ignore_index=True)
         df2_c = df2.reset_index(drop=True).sort_values(by=keys, ignore_index=True)
-        from polars.testing import assert_frame_equal
-        import polars as pl
 
-        assert_frame_equal(pl.DataFrame(df1_c), pl.DataFrame(df2_c))
+        assert_frame_equal(_cast_dt(pl.DataFrame(df1_c)), _cast_dt(pl.DataFrame(df2_c)))
 
     source_cols = [f.column_name for f in source.get_schema() if f.column_name not in forbidden_cols]
 
