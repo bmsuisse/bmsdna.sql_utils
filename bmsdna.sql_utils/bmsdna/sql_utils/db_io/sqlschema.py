@@ -237,7 +237,7 @@ def col_approx_eq(type1: str, type2: str | ex.DataType | ex.DataType.Type):
     if isinstance(type2, ex.DataType.Type):
         type2 = str(type2).lower()
     elif isinstance(type2, ex.DataType):
-        type2 = str(type2.type).lower()
+        type2 = str(type2).lower()
     if "(" in type1:
         type1 = type1[: type1.find("(")]
     if "(" in type2:
