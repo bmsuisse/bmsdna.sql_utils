@@ -244,7 +244,7 @@ def col_approx_eq(type1: str, type2: str | ex.DataType | ex.DataType.Type):
         type2 = type2[: type2.find("(")]
     if type1.lower() in ["varchar", "nvarchar"] and type2.lower() in ["varchar", "nvarchar"]:
         return True
-    return False
+    return type1 == type2
 
 
 @dataclass(frozen=True)
