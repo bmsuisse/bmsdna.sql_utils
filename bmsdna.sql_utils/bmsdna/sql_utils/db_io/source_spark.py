@@ -9,7 +9,7 @@ from bmsdna.sql_utils.lake.types import SQLField
 from bmsdna.sql_utils.lake.type_fromarrow import recursive_get_type
 from bmsdna.sql_utils.query import sql_quote_name
 from typing import TYPE_CHECKING
-from .sqlschema import with_max_str_length
+from .sqlschema import with_max_str_length, get_str_length
 import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
@@ -107,7 +107,29 @@ class SourceSpark(ImportSource):
                 return ex.DataType.build("date", dialect="tsql")
             return ex.DataType.build(simple_str, dialect="spark")
 
-        return [SQLField(f.name, sqlglot_type(f.dataType)) for f in fields]
+        schema = [SQLField(f.name, sqlglot_type(f.dataType)) for f in fields]
+        sql_lens = []
+        length_fields = []
+        for field in schema:
+            if field.data_type.this in ex.DataType.TEXT_TYPES:
+                length_fields.append(field.column_name)
+                sql_lens.append(
+                    f"MAX(LEN({sql_quote_name(field.column_name)})) as {sql_quote_name(field.column_name)}"
+                )
+
+        if sql_lens:
+            lengths = self.df.selectExpr(*sql_lens).collect()[0].asDict()
+            new_schema: list[SQLField] = []
+            for field in schema:
+                if field.column_name in length_fields:
+                    new_field = SQLField(
+                        field.column_name, with_max_str_length(field.data_type, lengths[field.column_name])
+                    )
+                    new_schema.append(new_field)
+                else:
+                    new_schema.append(field)
+            return new_schema
+        return schema
 
     def get_last_change_date(self):
         if self.change_date:
