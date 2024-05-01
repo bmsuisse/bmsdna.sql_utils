@@ -108,8 +108,8 @@ def spark_session():
     return spark
 
 
-@pytest.fixture(scope="session", autouse=True)
-def spawn_azurite():
+@pytest.fixture(scope="session")
+def azurite():
     import test_server
     import os
 
