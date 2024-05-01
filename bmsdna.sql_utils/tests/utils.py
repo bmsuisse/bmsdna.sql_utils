@@ -30,9 +30,13 @@ async def execute_compare(
     def _compare_dfs(df1, df2):
         df1_c = df1.reset_index(drop=True).sort_values(by=keys, ignore_index=True)
         df2_c = df2.reset_index(drop=True).sort_values(by=keys, ignore_index=True)
-        return df1_c.compare(df2_c)
+        from polars.testing import assert_frame_equal
+        import polars as pl
+
+        assert_frame_equal(pl.DataFrame(df1_c), pl.DataFrame(df2_c))
 
     source_cols = [f.column_name for f in source.get_schema() if f.column_name not in forbidden_cols]
+
     assert len(source_cols) > 0, "nr source columns must be > 0"
     quoted_source_cols = [f'"{c}"' for c in source_cols]
     await insert_into_table(source=source, connection_string=connection.conn_str, target_table=target_table)
@@ -46,8 +50,7 @@ async def execute_compare(
         duckdb_create_view_for_delta(con, delta_path, target_table[1])
         df2 = con.execute(f"SELECT {', '.join(quoted_source_cols)} FROM {sql_quote_name(target_table[1])}").fetchdf()
     if test_data:
-        comp = _compare_dfs(df1, df2)
-        assert comp.empty, comp
+        _compare_dfs(df1, df2)
     else:
         assert df1.shape == df2.shape, "shape must equal"
 
@@ -66,7 +69,6 @@ async def execute_compare(
             con=con,
         )
     if test_data:
-        comp = _compare_dfs(df1, df2)
-        assert comp.empty, comp
+        _compare_dfs(df1, df2)
     else:
         assert df1.shape == df2.shape, "shape must equal"
