@@ -134,6 +134,8 @@ def get_col_definition(
     sql_type = field.data_type.sql("tsql")
     if sql_type.startswith("varchar") or sql_type.startswith("char"):
         sql_type = "n" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
+    if sql_type.startswith("VARCHAR") or sql_type.startswith("CHAR"):
+        sql_type = "N" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
     definit = sql_quote_name(field.column_name) + " " + sql_type + (" NOT NULL" if not nullable else "")
     if default is not None and default.lower() != "null":
         definit += " DEFAULT (" + default + ")"
@@ -154,6 +156,8 @@ def sql_quote_value_with_type(field: FieldWithType | SQLField, value: Any) -> st
         return sql_quote_value(value)  # string / int32 are defaults for sql server
     sql_type = field.data_type.sql("tsql")
     if sql_type.startswith("varchar") or sql_type.startswith("char"):
+        sql_type = "n" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
+    if sql_type.startswith("VARCHAR") or sql_type.startswith("CHAR"):
         sql_type = "n" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
     if value is not None:
         return f"CAST({sql_quote_value(value)} as {sql_type})"
