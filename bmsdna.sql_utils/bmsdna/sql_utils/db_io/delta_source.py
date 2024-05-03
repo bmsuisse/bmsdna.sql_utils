@@ -126,7 +126,7 @@ class DeltaSource(ImportSource):
                         assert res is not None
                         for i, lf in enumerate(length_fields):
                             fields[lf] = SQLField(
-                                fields[lf].column_name, with_max_str_length(fields[lf].data_type, res[i])
+                                fields[lf].column_name, with_max_str_length(fields[lf].data_type, res[i] or 100)
                             )
 
         self._schema = list(fields.values())

@@ -131,7 +131,7 @@ class SourceSpark(ImportSource):
             for field in schema:
                 if field.column_name in length_fields:
                     new_field = SQLField(
-                        field.column_name, with_max_str_length(field.data_type, lengths[field.column_name])
+                        field.column_name, with_max_str_length(field.data_type, lengths[field.column_name] or 100)
                     )
                     new_schema.append(new_field)
                 else:
