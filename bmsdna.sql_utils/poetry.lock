@@ -851,18 +851,18 @@ six = "*"
 
 [[package]]
 name = "lakeapi2sql"
-version = "0.9.0"
+version = "0.9.1"
 description = ""
 optional = true
 python-versions = ">=3.10"
 files = [
-    {file = "lakeapi2sql-0.9.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:30240848115c2f30b915c51cec6847dcc339b6c538c23aee6dac52e521927330"},
-    {file = "lakeapi2sql-0.9.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:1d1a6ecfad1a648f6336195b7984028995599cf9c4b678a7d125f0b292f2f73e"},
-    {file = "lakeapi2sql-0.9.0-cp310-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:895ec13642b2334c68af31c811a4afa5a30a5a4cd7ee1d065c84254b602b1bc4"},
-    {file = "lakeapi2sql-0.9.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f1ca9b43a397dabbe4c98dca035831aee3f3ca70f0770770d7f8e530feb26c30"},
-    {file = "lakeapi2sql-0.9.0-cp310-abi3-win32.whl", hash = "sha256:c5a8c868f8467a9ae908bff6330739bb2bb4c9d6516c63f2f58bb0c6ce2df3e2"},
-    {file = "lakeapi2sql-0.9.0-cp310-abi3-win_amd64.whl", hash = "sha256:cfe82acb1be4f28bc41866703b1088ac839d96ba0e1f148b849156f96608d382"},
-    {file = "lakeapi2sql-0.9.0.tar.gz", hash = "sha256:6864a9ccfc0d176f455d0ddb4ffc83a30e0597dccd66dc9fc4615f931e67721a"},
+    {file = "lakeapi2sql-0.9.1-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:bf6aef6346ab4190d71d737f892e92396d4229bb4059a2b9c61bf8bf48a1b655"},
+    {file = "lakeapi2sql-0.9.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:41ba4f1486e3bfe8fa566ff1f11d3bf950dd86f63ac2d7ac220855c99bb69228"},
+    {file = "lakeapi2sql-0.9.1-cp310-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3611767dc21ec0c32611b5cc0d51e01e712c103a79372037fb9330792c6f3301"},
+    {file = "lakeapi2sql-0.9.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:33f7d30a36121f9a45e43b663fbae182a50420bbb7645fe13698bbca42bd302f"},
+    {file = "lakeapi2sql-0.9.1-cp310-abi3-win32.whl", hash = "sha256:7fecb632f58070dc65bebbeec57026e7294aab6f0ca05556652291f006dd47a5"},
+    {file = "lakeapi2sql-0.9.1-cp310-abi3-win_amd64.whl", hash = "sha256:3339f274724f65744f48ef3b9ac5a44a167b72c91081b486fe64e2355efe4743"},
+    {file = "lakeapi2sql-0.9.1.tar.gz", hash = "sha256:fbd41265fcfa604bac6bdff346174a0fba01b4eb93fb23434cc8aed353f95d87"},
 ]
 
 [package.dependencies]
@@ -1923,4 +1923,4 @@ polars = ["polars"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "db093cf3f32bf89c1c9e3b73edf24d8ac486e139eec1cb7a5e005bc8cac94eeb"
+content-hash = "3ee11e4100f9b11369aa40177ccd766666e68f7961e261e37027094b98ca071f"
