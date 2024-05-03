@@ -119,7 +119,9 @@ class DeltaPolarsSource(ImportSource):
         if len(sql_lens) > 0:
             res = polars_scan_delta(self.delta_lake).select(*sql_lens).collect().to_dicts()
             for lf in length_fields:
-                fields[lf] = SQLField(fields[lf].column_name, with_max_str_length(fields[lf].data_type, res[0][lf]))
+                fields[lf] = SQLField(
+                    fields[lf].column_name, with_max_str_length(fields[lf].data_type, res[0][lf] or 100)
+                )
 
         self._schema = list(fields.values())
         return self._schema
