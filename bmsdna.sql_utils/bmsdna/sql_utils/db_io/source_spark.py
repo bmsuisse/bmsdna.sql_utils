@@ -24,6 +24,7 @@ class SourceSpark(ImportSource):
         df: "DataFrame",
         use_json_insert=False,
         change_date: datetime | None = None,
+        partition_columns: list[str] | None = None,
     ) -> None:
         super().__init__()
 
@@ -31,6 +32,7 @@ class SourceSpark(ImportSource):
         self.use_json_insert = use_json_insert
         self.df = df
         self.change_date = change_date
+        self.partition_columns = partition_columns
 
     async def write_to_sql_server(
         self,
@@ -88,9 +90,15 @@ class SourceSpark(ImportSource):
 
     def get_partition_values(self) -> list[dict]:
         col_names = [f.column_name for f in self.get_schema()]
-        if "_partition" in col_names:
+        if "_partition" in col_names and self.partition_columns is None:
+            self.partition_columns = ["_partition"]
+        if self.partition_columns:
             return [
-                r.asDict(True) for r in self.df.selectExpr("_partition").orderBy("_partition").distinct().collect()
+                r.asDict(True)
+                for r in self.df.selectExpr(*self.partition_columns)
+                .orderBy(*self.partition_columns)
+                .distinct()
+                .collect()
             ]
         return []
 
