@@ -279,7 +279,10 @@ async def insert_into_table_partition(
 
     with pyodbc.connect(connstr_odbc) as conn:
         if not skip_create_table:
-            init_logging(conn)
+            try:
+                init_logging(conn)
+            except Exception as err:
+                logger.warning(f"Could not initialize logging: {err}")
         try:
             insert_into_log(conn, target_table, "start_load", partition_filter=partition_filter_str)
 
