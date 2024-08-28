@@ -30,8 +30,7 @@ jobs:
         run: poetry install --all-extras --with test,dev
         working-directory: bmsdna.sql_utils
       - name: Pyright
-        run: |
-          poetry run pyright .
+        run: poetry run pyright bmsdna
         working-directory: bmsdna.sql_utils
       - name: Test with pytest
         run: poetry run pytest  --capture=tee-sys  tests
