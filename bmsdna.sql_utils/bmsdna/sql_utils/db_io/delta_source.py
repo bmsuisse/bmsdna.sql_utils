@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from deltalake2db import get_sql_for_delta
 from .source import ImportSource, WriteInfo
 import urllib.parse
 from bmsdna.sql_utils.query import build_connection_string
@@ -40,6 +39,7 @@ class DeltaSource(ImportSource):
     ) -> WriteInfo:
         import duckdb
         from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
+        from deltalake2db import get_sql_for_delta
 
         sql = get_sql_for_delta(self.delta_lake, partition_filters, select)
         if sql is not None:
@@ -70,6 +70,7 @@ class DeltaSource(ImportSource):
 
     def get_partition_values(self) -> list[dict]:
         import duckdb
+        from deltalake2db import get_sql_for_delta
 
         part_cols = self.delta_lake.metadata().partition_columns
 
