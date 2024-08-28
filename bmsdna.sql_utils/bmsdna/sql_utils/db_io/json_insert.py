@@ -36,7 +36,7 @@ async def _batch_reader_to_json(reader: "pa.RecordBatchStreamReader"):
         for batch in reader:  # type: ignore
             pld = polars.from_arrow(batch)  # type: ignore
             assert isinstance(pld, polars.DataFrame)  # type: ignore
-            jsond = pld.write_json(row_oriented=True)  # type: ignore
+            jsond = pld.write_json()  # type: ignore
             yield jsond
     except ImportError:
         for batch in reader:
