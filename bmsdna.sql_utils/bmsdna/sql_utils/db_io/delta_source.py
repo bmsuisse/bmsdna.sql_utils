@@ -86,6 +86,7 @@ class DeltaSource(ImportSource):
 
     def get_schema(self) -> list[SQLField]:
         import pyarrow as pa
+        from deltalake2db import get_sql_for_delta
 
         if self._schema is not None:
             return self._schema

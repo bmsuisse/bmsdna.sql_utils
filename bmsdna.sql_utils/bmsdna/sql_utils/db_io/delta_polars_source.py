@@ -73,6 +73,7 @@ class DeltaPolarsSource(ImportSource):
 
     def get_partition_values(self) -> list[dict]:
         import polars as pl
+        from deltalake2db import polars_scan_delta
 
         part_cols = self.delta_lake.metadata().partition_columns
 
@@ -85,6 +86,7 @@ class DeltaPolarsSource(ImportSource):
 
     def get_schema(self) -> list[SQLField]:
         import pyarrow as pa
+        from deltalake2db import polars_scan_delta
 
         if self._schema is not None:
             return self._schema
@@ -111,7 +113,7 @@ class DeltaPolarsSource(ImportSource):
                 length_fields.append(fieldname)
                 import json
 
-                sql_lens.append(pl.col(fieldname).apply(lambda x: len(json.dumps(x))).max().alias(fieldname))
+                sql_lens.append(pl.col(fieldname).map_elements(lambda x: len(json.dumps(x))).max().alias(fieldname))
             elif is_string:
                 length_fields.append(fieldname)
                 sql_lens.append(pl.col(fieldname).str.len_chars().max().alias(fieldname))

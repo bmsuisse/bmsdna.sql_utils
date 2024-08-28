@@ -623,25 +623,24 @@ pyspark = ">=3.5.0,<3.6.0"
 
 [[package]]
 name = "deltalake"
-version = "0.17.4"
+version = "0.19.1"
 description = "Native Delta Lake Python binding based on delta-rs with Pandas integration"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "deltalake-0.17.4-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:3f048bd4cdd3500fbb0d1b34046966ca4b7cefd1e9df71460b881ee8ad7f844a"},
-    {file = "deltalake-0.17.4-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:b539265d8293794872e1dc3b2daad50abe05ab425e961824b3ac1155bb294604"},
-    {file = "deltalake-0.17.4-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:55e6be5f5ab8d5d34d2ea58d86e93eec2da5d2476e3c15e9520239457618bca4"},
-    {file = "deltalake-0.17.4-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:94dde6c2d0a07e9ce47be367d016541d3a499839350852205819353441e1a9c1"},
-    {file = "deltalake-0.17.4-cp38-abi3-win_amd64.whl", hash = "sha256:f51f499d50dad88bdc18c5ed7c2319114759f3220f83aa2d32166c19accee4ce"},
-    {file = "deltalake-0.17.4.tar.gz", hash = "sha256:c3c10577afc46d4b10ed16246d814a8c40b3663099066681eeba89f908373814"},
+    {file = "deltalake-0.19.1-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:ddaaaa9c85a17791c3997cf320ac11dc1725d16cf4b6f0ff1b130853e7b56cd0"},
+    {file = "deltalake-0.19.1-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:e0184d5a3f0d4f4f1fb992c3bdc8736329b78b6a4faf1a278109ec35d9945c1d"},
+    {file = "deltalake-0.19.1-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ec9d117fcf6c198f3d554be2f3a6291ca3838530650db236741ff48d4d47abb4"},
+    {file = "deltalake-0.19.1-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:447ef721319ed15f7b5f6da507efd5fed0e6172e5ae55ac044d5b8fc9b812e47"},
+    {file = "deltalake-0.19.1-cp38-abi3-win_amd64.whl", hash = "sha256:b15bc343a9f8f3de80fbedcebd5d9472b539eb0f538a71739c7fcf699089127e"},
+    {file = "deltalake-0.19.1.tar.gz", hash = "sha256:5e09fabb221fb81e989c283c16278eaffb6e85706d98364abcda5c0c6ca73598"},
 ]
 
 [package.dependencies]
-pyarrow = ">=8"
-pyarrow-hotfix = "*"
+pyarrow = ">=16"
 
 [package.extras]
-devel = ["mypy (>=1.8.0,<1.9.0)", "packaging (>=20)", "pytest", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-timeout", "ruff (>=0.3.0,<0.4.0)", "sphinx (<=4.5)", "sphinx-rtd-theme", "toml", "wheel"]
+devel = ["azure-storage-blob (==12.20.0)", "mypy (==1.10.1)", "packaging (>=20)", "pytest", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-timeout", "ruff (==0.5.2)", "sphinx (<=4.5)", "sphinx-rtd-theme", "toml", "wheel"]
 pandas = ["pandas"]
 pyspark = ["delta-spark", "numpy (==1.22.2)", "pyspark"]
 
@@ -1343,17 +1342,6 @@ numpy = ">=1.16.6"
 test = ["cffi", "hypothesis", "pandas", "pytest", "pytz"]
 
 [[package]]
-name = "pyarrow-hotfix"
-version = "0.6"
-description = ""
-optional = false
-python-versions = ">=3.5"
-files = [
-    {file = "pyarrow_hotfix-0.6-py3-none-any.whl", hash = "sha256:dcc9ae2d220dff0083be6a9aa8e0cdee5182ad358d4931fce825c545e5c89178"},
-    {file = "pyarrow_hotfix-0.6.tar.gz", hash = "sha256:79d3e030f7ff890d408a100ac16d6f00b14d44a502d7897cd9fc3e3a534e9945"},
-]
-
-[[package]]
 name = "pycparser"
 version = "2.22"
 description = "C parser in Python"
@@ -1983,4 +1971,4 @@ polars = ["polars"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "440b901d387778e7d1f085faa6899cdf03d6bb903e049234514a4efee73c469c"
+content-hash = "6d3712308cbad5d6287591b206fbea0a614ccfd15c649bd232f99511bc99cf58"
