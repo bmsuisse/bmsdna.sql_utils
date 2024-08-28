@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from deltalake2db import get_sql_for_delta
 from .source import ImportSource, WriteInfo
 import urllib.parse
 from bmsdna.sql_utils.query import build_connection_string

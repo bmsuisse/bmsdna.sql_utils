@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from deltalake2db import polars_scan_delta
 from .source import ImportSource, WriteInfo
 import urllib.parse
 from bmsdna.sql_utils.query import build_connection_string
@@ -40,6 +39,7 @@ class DeltaPolarsSource(ImportSource):
     ) -> WriteInfo:
         import polars
         from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
+        from deltalake2db import polars_scan_delta
 
         df = polars_scan_delta(self.delta_lake, conditions=partition_filters).collect(streaming=True)
         arrow_schema = df.limit(0).to_arrow().schema
