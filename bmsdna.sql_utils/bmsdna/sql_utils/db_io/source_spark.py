@@ -80,11 +80,17 @@ class SourceSpark(ImportSource):
                 )
                 col_names = [f.column_name for f in filtered_schema]
         else:
-            tbl = pa.Table.from_pandas(p_df.toPandas())
+            if not p_df.isEmpty():
+                try:
+                    tbl = p_df.toArrow()  # type: ignore
+                except AttributeError:
+                    tbl = pa.Table.from_pandas(p_df.toPandas())
 
-            record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
-            res = await insert_record_batch_to_sql(connection_string_sql, table_str, record_batch_reader, select)
-            col_names = [f["name"] for f in res["fields"]]
+                record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
+                res = await insert_record_batch_to_sql(connection_string_sql, table_str, record_batch_reader, select)
+                col_names = [f["name"] for f in res["fields"]]
+            else:
+                col_names = [f.column_name for f in self.get_schema()]
         return WriteInfo(column_names=col_names, table_name=target_table)
 
     def get_partition_values(self) -> list[dict]:
