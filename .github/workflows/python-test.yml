@@ -18,6 +18,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: Yarden-zamir/install-mssql-odbc@main
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
