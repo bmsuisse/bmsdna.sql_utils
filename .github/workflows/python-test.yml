@@ -18,6 +18,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: Yarden-zamir/install-mssql-odbc@main
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -25,13 +26,13 @@ jobs:
       - name: Install tooling dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install project dependencies
-        run: poetry install --all-extras --with test,dev
+        run: uv sync --all-extras --all-groups
         working-directory: bmsdna.sql_utils
       - name: Pyright
-        run: poetry run pyright bmsdna
+        run: uv run pyright bmsdna
         working-directory: bmsdna.sql_utils
       - name: Test with pytest
-        run: poetry run pytest  --capture=tee-sys  tests
+        run: uv run pytest  --maxfail=3 --capture=tee-sys  tests
         working-directory: bmsdna.sql_utils

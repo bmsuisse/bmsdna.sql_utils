@@ -26,11 +26,12 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: "3.11"
-      - name: Install dependencies
+      - name: Install tooling dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install poetry
-          poetry install --all-extras
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Install project dependencies
+        run: uv sync --all-extras --all-groups
         working-directory: bmsdna.sql_utils
       - name: Build package
         run: poetry build
