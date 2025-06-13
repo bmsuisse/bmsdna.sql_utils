@@ -235,25 +235,17 @@ wheels = [
 
 [[package]]
 name = "bmsdna-sql-utils"
-version = "0.13.0"
+version = "0.13.1"
 source = { editable = "." }
 dependencies = [
-    { name = "aiohttp" },
-    { name = "aioodbc" },
-    { name = "arrow-odbc" },
-    { name = "deltalake" },
-    { name = "deltalake2db" },
-    { name = "duckdb" },
     { name = "lakeapi2sql" },
-    { name = "polars" },
     { name = "pydantic" },
     { name = "pyodbc" },
-    { name = "python-tds" },
-    { name = "requests" },
 ]
 
 [package.optional-dependencies]
 db-io = [
+    { name = "aioodbc" },
     { name = "lakeapi2sql" },
     { name = "pyodbc" },
 ]
@@ -266,7 +258,12 @@ db2delta = [
 ]
 delta = [
     { name = "deltalake" },
+    { name = "deltalake2db" },
     { name = "duckdb" },
+]
+lake-api = [
+    { name = "aiohttp" },
+    { name = "requests" },
 ]
 polars = [
     { name = "polars" },
@@ -302,30 +299,25 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", specifier = ">=3.8.5,<4" },
     { name = "aiohttp", marker = "extra == 'db2delta'" },
-    { name = "aioodbc", specifier = ">=0.5.0" },
-    { name = "arrow-odbc", specifier = ">=5.0.0" },
+    { name = "aiohttp", marker = "extra == 'lake-api'", specifier = ">=3.8.5,<4" },
+    { name = "aioodbc", marker = "extra == 'db-io'", specifier = ">=0.5.0" },
     { name = "arrow-odbc", marker = "extra == 'db2delta'" },
-    { name = "deltalake", specifier = ">=0.16.4,<1.0" },
-    { name = "deltalake", marker = "extra == 'db2delta'" },
-    { name = "deltalake", marker = "extra == 'delta'" },
-    { name = "deltalake2db", specifier = ">=0.3.4" },
+    { name = "deltalake", marker = "extra == 'db2delta'", specifier = ">=0.16.4,<1.0" },
+    { name = "deltalake", marker = "extra == 'delta'", specifier = ">=0.16.4,<1.0" },
     { name = "deltalake2db", marker = "extra == 'db2delta'" },
-    { name = "duckdb", specifier = "~=1.2" },
-    { name = "duckdb", marker = "extra == 'db2delta'" },
+    { name = "deltalake2db", marker = "extra == 'delta'", specifier = ">=0.3.4" },
+    { name = "duckdb", marker = "extra == 'db2delta'", specifier = ">=1.2" },
     { name = "duckdb", marker = "extra == 'delta'" },
     { name = "lakeapi2sql", specifier = ">=0.9.1" },
     { name = "lakeapi2sql", marker = "extra == 'db-io'" },
-    { name = "polars", specifier = ">=1.0.0" },
-    { name = "polars", marker = "extra == 'polars'" },
+    { name = "polars", marker = "extra == 'polars'", specifier = ">=1.0.0" },
     { name = "pydantic", specifier = ">=2.3.0,<3" },
     { name = "pyodbc", specifier = ">=5.0.1,<6" },
     { name = "pyodbc", marker = "extra == 'db-io'" },
-    { name = "python-tds", specifier = ">=1.13.0,<2" },
-    { name = "requests", specifier = ">=2.28.0" },
+    { name = "requests", marker = "extra == 'lake-api'", specifier = ">=2.28.0" },
 ]
-provides-extras = ["db-io", "delta", "db2delta", "polars"]
+provides-extras = ["lake-api", "db-io", "delta", "db2delta", "polars"]
 
 [package.metadata.requires-dev]
 dev = [
