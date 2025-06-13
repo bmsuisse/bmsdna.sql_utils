@@ -1,70 +1,54 @@
-[tool.poetry]
+[project]
 name = "bmsdna-sql-utils"
 version = "0.12.13"
 description = ""
-authors = ["Adrian Ehrsam <adrian.ehrsam@bmsuisse.ch>"]
-readme = "README.md"
-packages = [{ include = "bmsdna" }]
+authors = [
+    { name = "Adrian Ehrsam", email = "adrian.ehrsam@bmsuisse.ch" },
+]
+dependencies = [
+    "pyodbc >=5.0.1,<6",
+    "aioodbc >=0.5.0",
+    "python-tds >=1.13.0,<2",
+    "pydantic >=2.3.0,<3",
+    "aiohttp >=3.8.5,<4",
+    "requests >=2.28.0",
+    "duckdb ~=1.2",
+    "lakeapi2sql >=0.9.1",
+    "deltalake >=0.16.4",
+    "python-dateutil >=2.8.2,<3 ; python_version <3.11",
+    "arrow-odbc >=5.0.0",
+    "deltalake2db >=0.3.4",
+    "polars>=1.0.0",
+]
+requires-python = "~=3.10"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pyodbc = { version = "^5.0.1", optional = true }
-aioodbc = { version = "^0.5.0", optional = true }
-python-tds = { version = "^1.13.0", optional = true }
-pydantic = { version = "^2.3.0", optional = true }
-aiohttp =  { version ="^3.8.5", optional = true }
-requests = ">=2.28.0"
-duckdb = { version = "^1.0", optional = true }
-lakeapi2sql = { version = ">=0.9.1", optional = true }
-deltalake = { version = ">=0.16.4", optional = true }
-python-dateutil = { version = "^2.8.2", python = "<3.11" }
-arrow-odbc = { version = ">=5.0.0", optional = true }
-deltalake2db = {version = ">=0.3.4", optional = true }
-polars = {extras = ["chrono-tz"], version = ">=0.20.21", optional = true }
+[project.scripts]
 
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-pyright = "^1.1.325"
-pyodbc = { version = ">=4.0.0" }
-aioodbc = { version = "^0.5.0" }
-python-tds = { version = "^1.13.0" }
-pydantic = ">=1.10.0"
-sqlglot = ">=20.0.0"
-pyspark = "^3.5.1"
-pandas = "^2.2.2"
-delta-spark = "^3.1.0"
-ruff = "^0.4.2"
-
-[tool.poetry.group.test]
-optional = true
-
-[tool.poetry.group.test.dependencies]
-pytest-asyncio = "^0.23.5"
-pytest = "^7.4.3"
-pytest-order = "^1.2.0"
-docker = "^7.0.0"
-pytest-cov = "^5.0.0"
-azure-identity = "^1.16.0"
-azure-storage-blob = "^12.19.1"
-python-dotenv = "^1.0.1"
-faker = "^25.0.0"
-deltalake = "^0.19.0"
-
-[pytest]
-log_cli = true
-
-[tool.poetry.extras]
-db-io = ["pyodbc", "lakeapi2sql"]
-delta = ["duckdb", "deltalake"]
-db2delta = ["duckdb", "deltalake", "arrow-odbc", "deltalake2db", "aiohttp"]
-polars = ["polars"]
+[project.optional-dependencies]
+db-io = [
+    "pyodbc",
+    "lakeapi2sql",
+]
+delta = [
+    "duckdb",
+    "deltalake",
+]
+db2delta = [
+    "duckdb",
+    "deltalake",
+    "arrow-odbc",
+    "deltalake2db",
+    "aiohttp",
+]
+polars = [
+    "polars",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
 
 [tool.pyright]
 venv = ".venv"
@@ -74,3 +58,44 @@ typeCheckingMode = "basic"
 
 [tool.ruff]
 line-length = 119
+
+[tool.uv]
+native-tls = true
+keyring-provider = "subprocess"
+
+[[tool.uv.index]]
+name = "BMSAzureDevOps"
+url = "https://VssSessionToken@pkgs.dev.azure.com/bmeurope/_packaging/BMS/pypi/simple/"
+explicit = true
+publish-url = "https://pkgs.dev.azure.com/bmeurope/_packaging/BMS/pypi/upload/"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "bmsdna",
+]
+
+[dependency-groups]
+dev = [
+    "pyright >=1.1.325,<2",
+    "pyodbc >=4.0.0",
+    "aioodbc >=0.5.0",
+    "python-tds >=1.13.0,<2",
+    "pydantic >=1.10.0",
+    "sqlglot >=20.0.0",
+    "pyspark >=3.5.1,<4",
+    "pandas >=2.2.2,<3",
+    "delta-spark >=3.1.0,<4",
+    "ruff >=0.4.2",
+]
+test = [
+    "pytest-asyncio >=0.23.5",
+    "pytest >=7.4.3,<8",
+    "pytest-order >=1.2.0,<2",
+    "docker >=7.0.0,<8",
+    "pytest-cov >=5.0.0,<6",
+    "azure-identity >=1.16.0,<2",
+    "azure-storage-blob >=12.19.1,<13",
+    "python-dotenv >=1.0.1,<2",
+    "faker >=25.0.0,<26",
+    "deltalake >=0.19.0",
+]
