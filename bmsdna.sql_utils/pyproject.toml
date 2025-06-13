@@ -1,6 +1,6 @@
 [project]
 name = "bmsdna-sql-utils"
-version = "0.12.13"
+version = "0.13.0"
 description = ""
 authors = [
     { name = "Adrian Ehrsam", email = "adrian.ehrsam@bmsuisse.ch" },
@@ -15,12 +15,11 @@ dependencies = [
     "duckdb ~=1.2",
     "lakeapi2sql >=0.9.1",
     "deltalake >=0.16.4",
-    "python-dateutil >=2.8.2,<3 ; python_version <3.11",
     "arrow-odbc >=5.0.0",
     "deltalake2db >=0.3.4",
     "polars>=1.0.0",
 ]
-requires-python = "~=3.10"
+requires-python = "~=3.11"
 
 [project.scripts]
 
@@ -79,12 +78,12 @@ dev = [
     "pyright >=1.1.325,<2",
     "pyodbc >=4.0.0",
     "aioodbc >=0.5.0",
-    "python-tds >=1.13.0,<2",
+    "python-tds >=1.13.0",
     "pydantic >=1.10.0",
     "sqlglot >=20.0.0",
-    "pyspark >=3.5.1,<4",
+    "pyspark >=3.5.1",
     "pandas >=2.2.2,<3",
-    "delta-spark >=3.1.0,<4",
+    "delta-spark >=3.1.0",
     "ruff >=0.4.2",
 ]
 test = [

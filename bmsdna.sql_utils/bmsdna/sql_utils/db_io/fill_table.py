@@ -485,8 +485,7 @@ async def has_delta(
     return True
 
 
-async def insert_into_table(
-    *,
+async def _execute(
     source: ImportSource,
     connection_string: str | dict,
     target_table: tuple[str, str],
@@ -506,8 +505,6 @@ async def insert_into_table(
     await_partitions=True,
     force=False,
 ):
-    import pyodbc
-
     calculated_columns = calculated_columns or dict()
     part_values = source.get_partition_values()
     schema = source.get_schema()
@@ -624,6 +621,72 @@ async def insert_into_table(
             "sql_utils_load_date",
             mod_date.isoformat() if mod_date else "",
         )
+
+
+async def insert_into_table(
+    *,
+    source: ImportSource,
+    connection_string: str | dict,
+    target_table: tuple[str, str],
+    primary_keys: list[str] | None = None,
+    update_col: Optional[str] = None,
+    select: Optional[list[str]] = None,
+    table_per_partition=False,
+    after_swap: list[Callable[[AfterSwapParams], Any]] | Callable[[AfterSwapParams], Any] | None = None,
+    temp_full_mode: FULL_TEMP_MODES | None = None,
+    table_callback: (
+        list[Callable[[CreateTableCallbackParams], Any]] | Callable[[CreateTableCallbackParams], Any] | None
+    ) = None,
+    temp_table_callback: (
+        list[Callable[[CreateTableCallbackParams], Any]] | Callable[[CreateTableCallbackParams], Any] | None
+    ) = None,
+    calculated_columns: Mapping[str, Any] | None = None,
+    await_partitions=True,
+    force=False,
+):
+    import pyodbc
+
+    try:
+        await _execute(
+            source=source,
+            connection_string=connection_string,
+            target_table=target_table,
+            primary_keys=primary_keys,
+            update_col=update_col,
+            select=select,
+            table_per_partition=table_per_partition,
+            after_swap=after_swap,
+            temp_full_mode=temp_full_mode,
+            table_callback=table_callback,
+            temp_table_callback=temp_table_callback,
+            calculated_columns=calculated_columns,
+            await_partitions=await_partitions,
+            force=force,
+        )
+    except Exception as err:
+        if "Cannot create a row of size" in str(err):
+            connstr_odbc = build_connection_string(connection_string, odbc=True)
+            with pyodbc.connect(connstr_odbc) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(f"drop table {sql_quote_name(target_table)}")
+            await _execute(
+                source=source,
+                connection_string=connection_string,
+                target_table=target_table,
+                primary_keys=primary_keys,
+                update_col=update_col,
+                select=select,
+                table_per_partition=table_per_partition,
+                after_swap=after_swap,
+                temp_full_mode=temp_full_mode,
+                table_callback=table_callback,
+                temp_table_callback=temp_table_callback,
+                calculated_columns=calculated_columns,
+                await_partitions=await_partitions,
+                force=force,
+            )
+            return
+        raise err
 
 
 def get_create_index_callback(db_info: DBInfo):
