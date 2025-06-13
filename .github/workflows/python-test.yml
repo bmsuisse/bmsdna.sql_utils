@@ -34,5 +34,5 @@ jobs:
         run: uv run pyright bmsdna
         working-directory: bmsdna.sql_utils
       - name: Test with pytest
-        run: uv run pytest  --max-fail=3 --capture=tee-sys  tests
+        run: uv run pytest  --maxfail=3 --capture=tee-sys  tests
         working-directory: bmsdna.sql_utils
