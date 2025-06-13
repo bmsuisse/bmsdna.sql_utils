@@ -85,6 +85,7 @@ dev = [
     "pandas >=2.2.2,<3",
     "delta-spark >=3.1.0",
     "ruff >=0.4.2",
+    "pyarrow-stubs>=19.4",
 ]
 test = [
     "pytest-asyncio >=0.23.5",

@@ -41,7 +41,7 @@ class DeltaPolarsSource(ImportSource):
         from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
         from deltalake2db import polars_scan_delta
 
-        df = polars_scan_delta(self.delta_lake, conditions=partition_filters).collect(streaming=True)
+        df = polars_scan_delta(self.delta_lake, conditions=partition_filters).collect()
         arrow_schema = df.limit(0).to_arrow().schema
         slices = df.iter_slices()
 
@@ -92,7 +92,13 @@ class DeltaPolarsSource(ImportSource):
             return self._schema
         import polars as pl
 
-        schema = self.delta_lake.schema().to_pyarrow()
+        sc_schema = self.delta_lake.schema()  # .to_pyarrow()
+        if hasattr(sc_schema, "to_pyarrow"):
+            schema = sc_schema.to_pyarrow()  # type: ignore
+        else:
+            import pyarrow
+
+            schema: pyarrow.Schema = pyarrow.schema(sc_schema)  # type: ignore
         sql_lens = []
         length_fields: list[str] = []
         fields: dict[str, SQLField] = dict()

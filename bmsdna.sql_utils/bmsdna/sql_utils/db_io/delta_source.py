@@ -92,7 +92,13 @@ class DeltaSource(ImportSource):
             return self._schema
         import duckdb
 
-        schema = self.delta_lake.schema().to_pyarrow()
+        sc_schema = self.delta_lake.schema()  # .to_pyarrow()
+        if hasattr(sc_schema, "to_pyarrow"):
+            schema = sc_schema.to_pyarrow()  # type: ignore
+        else:
+            import pyarrow
+
+            schema: pyarrow.Schema = pyarrow.schema(sc_schema)  # type: ignore
         sql_lens = []
         length_fields: list[str] = []
         fields: dict[str, SQLField] = dict()

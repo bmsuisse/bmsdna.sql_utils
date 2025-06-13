@@ -29,7 +29,7 @@ async def insert_into_table_via_json(
             cursor.execute(insert_to_tmp_tbl_stmt, (batch_json,))
 
 
-async def _batch_reader_to_json(reader: "pa.RecordBatchStreamReader"):
+async def _batch_reader_to_json(reader: "pa.RecordBatchReader"):
     try:
         import polars  # type: ignore
 
