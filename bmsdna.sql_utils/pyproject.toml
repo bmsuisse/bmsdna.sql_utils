@@ -1,46 +1,40 @@
 [project]
 name = "bmsdna-sql-utils"
-version = "0.13.0"
+version = "0.13.1"
 description = ""
 authors = [
     { name = "Adrian Ehrsam", email = "adrian.ehrsam@bmsuisse.ch" },
 ]
 dependencies = [
     "pyodbc >=5.0.1,<6",
-    "aioodbc >=0.5.0",
-    "python-tds >=1.13.0,<2",
     "pydantic >=2.3.0,<3",
-    "aiohttp >=3.8.5,<4",
-    "requests >=2.28.0",
-    "duckdb ~=1.2",
     "lakeapi2sql >=0.9.1",
-    "deltalake >=0.16.4,<1.0",
-    "arrow-odbc >=5.0.0",
-    "deltalake2db >=0.3.4",
-    "polars>=1.0.0",
 ]
 requires-python = "~=3.11"
 
-[project.scripts]
-
 [project.optional-dependencies]
+lake_api =[
+    "aiohttp >=3.8.5,<4",
+    "requests >=2.28.0"]
 db-io = [
     "pyodbc",
     "lakeapi2sql",
+    "aioodbc >=0.5.0",
 ]
 delta = [
     "duckdb",
-    "deltalake",
+    "deltalake >=0.16.4,<1.0",
+    "deltalake2db >=0.3.4",
 ]
 db2delta = [
-    "duckdb",
-    "deltalake",
+    "duckdb >=1.2",
+    "deltalake >=0.16.4,<1.0",
     "arrow-odbc",
     "deltalake2db",
     "aiohttp",
 ]
 polars = [
-    "polars",
+    "polars>=1.0.0",
 ]
 
 [build-system]
