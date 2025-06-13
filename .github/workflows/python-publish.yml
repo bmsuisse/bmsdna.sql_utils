@@ -34,7 +34,7 @@ jobs:
         run: uv sync --all-extras --all-groups
         working-directory: bmsdna.sql_utils
       - name: Build package
-        run: poetry build
+        run: uv build
         working-directory: bmsdna.sql_utils
       - name: Copy files
         run: |
