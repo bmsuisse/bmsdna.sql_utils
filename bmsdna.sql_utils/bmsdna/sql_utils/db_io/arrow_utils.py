@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from arro3.core import RecordBatch as arro3RecordBatch
 
 
-async def to_pylist(reader: "pa.RecordBatch|arro3RecordBatch"):
+def to_pylist(reader: "pa.RecordBatch|arro3RecordBatch"):
     if hasattr(reader, "to_pylist"):
         return reader.to_pylist()  # type: ignore
     assert not isinstance(reader, pa.RecordBatch)
