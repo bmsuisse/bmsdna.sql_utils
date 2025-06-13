@@ -505,6 +505,8 @@ async def _execute(
     await_partitions=True,
     force=False,
 ):
+    import pyodbc
+
     calculated_columns = calculated_columns or dict()
     part_values = source.get_partition_values()
     schema = source.get_schema()
