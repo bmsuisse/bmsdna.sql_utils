@@ -2,6 +2,7 @@ import pyodbc
 import pyarrow as pa
 from typing import Union, Tuple
 
+from bmsdna.sql_utils.db_io.arrow_utils import to_pylist
 from bmsdna.sql_utils.lake.types import FieldWithType, SQLField
 from ..query import sql_quote_name
 
@@ -29,7 +30,7 @@ async def pyodbc_insert_into_table(
 
         for batch in reader:  # type: ignore
             with connection.cursor() as cursor:
-                lsdt = batch.to_pylist()
+                lsdt = to_pylist(batch)
                 prms = [tuple([item[c] for c in colnames]) for item in lsdt]
                 cursor.executemany(insert_to_tmp_tbl_stmt, prms)
     else:

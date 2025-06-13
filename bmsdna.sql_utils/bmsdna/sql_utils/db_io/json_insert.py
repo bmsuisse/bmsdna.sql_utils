@@ -1,3 +1,4 @@
+from bmsdna.sql_utils.db_io.arrow_utils import to_pylist
 from bmsdna.sql_utils.db_io.sqlschema import get_field_col_definition
 from bmsdna.sql_utils.query import sql_quote_name
 from bmsdna.sql_utils.lake import SQLField
@@ -40,7 +41,7 @@ async def _batch_reader_to_json(reader: "pa.RecordBatchReader"):
             yield jsond
     except ImportError:
         for batch in reader:
-            yield json.dumps(batch.to_pylist())
+            yield json.dumps(to_pylist(batch))
 
 
 async def insert_into_table_via_json_from_batches(

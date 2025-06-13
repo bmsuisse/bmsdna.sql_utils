@@ -275,6 +275,7 @@ polars = [
 [package.dev-dependencies]
 dev = [
     { name = "aioodbc" },
+    { name = "arro3-core" },
     { name = "delta-spark" },
     { name = "pandas" },
     { name = "pyarrow-stubs" },
@@ -329,6 +330,7 @@ provides-extras = ["db-io", "delta", "db2delta", "polars"]
 [package.metadata.requires-dev]
 dev = [
     { name = "aioodbc", specifier = ">=0.5.0" },
+    { name = "arro3-core", specifier = ">=0.5.0" },
     { name = "delta-spark", specifier = ">=3.1.0" },
     { name = "pandas", specifier = ">=2.2.2,<3" },
     { name = "pyarrow-stubs", specifier = ">=19.4" },
