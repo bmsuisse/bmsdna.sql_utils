@@ -48,7 +48,7 @@ async def execute_compare(
     await insert_into_table(source=source, connection_string=connection.conn_str, target_table=target_table)
     with connection.new_connection() as con:
         df1 = pd.read_sql(
-            f'SELECT {", ".join(quoted_source_cols)} FROM {target_table_sql} ORDER BY {keys_sql}',
+            f"SELECT {', '.join(quoted_source_cols)} FROM {target_table_sql} ORDER BY {keys_sql}",
             con=con,
         )
 
@@ -71,7 +71,7 @@ async def execute_compare(
     )
     with connection.new_connection() as con:
         df1 = pd.read_sql(
-            f'SELECT {", ".join(quoted_source_cols)} FROM {target_table_sql} ORDER BY {keys_sql}',
+            f"SELECT {', '.join(quoted_source_cols)} FROM {target_table_sql} ORDER BY {keys_sql}",
             con=con,
         )
     if test_data:

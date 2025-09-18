@@ -12,7 +12,7 @@ async def test_insert_user2(connection: "DB_Connection", spark_session: "SparkSe
     import os
 
     df = spark_session.sql(
-        f"select * from delta.`{os.path.abspath('tests/data/user2')}` order by \"User_-_iD\", __timestamp"
+        f'select * from delta.`{os.path.abspath("tests/data/user2")}` order by "User_-_iD", __timestamp'
     )
 
     s = SourceSpark(df)
@@ -33,7 +33,7 @@ async def test_insert_user2_json(connection: "DB_Connection", spark_session: "Sp
     import os
 
     df = spark_session.sql(
-        f"select * from delta.`{os.path.abspath('tests/data/user2')}` order by \"User_-_iD\", __timestamp"
+        f'select * from delta.`{os.path.abspath("tests/data/user2")}` order by "User_-_iD", __timestamp'
     )
 
     s = SourceSpark(df)
