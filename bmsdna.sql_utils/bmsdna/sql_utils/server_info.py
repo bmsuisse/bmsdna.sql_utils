@@ -80,9 +80,7 @@ class DBInfo:
                 return self.azure_sku not in ["S0", "S1", "S2"]
         return True
 
-    def azure_scale_to(
-        self, conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection", azure_sku: Azure_SKUs
-    ) -> bool:
+    def azure_scale_to(self, conn: "Connection", azure_sku: Azure_SKUs) -> bool:
         with conn.cursor() as cur:
             if azure_sku == self.azure_sku:
                 return False
@@ -105,7 +103,7 @@ class DBInfo:
         return True
 
 
-def get_db_info(conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection") -> DBInfo:
+def get_db_info(conn: "Connection") -> DBInfo:
     with conn.cursor() as cursor:
         cursor.execute(
             "select cast(SERVERPROPERTY('EditionID') as nvarchar(100)), cast(SERVERPROPERTY('Edition') as nvarchar(100)), dB_NAME(), DB_ID()"
