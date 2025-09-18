@@ -3,9 +3,7 @@ from bmsdna.sql_utils.query import sql_quote_name
 from bmsdna.sql_utils.result import make_class_from_cursor
 
 if TYPE_CHECKING:
-    import pytds
-    import pyodbc
-    import mssql_python
+    from bmsdna.sql_utils.dbapi import Connection
 
 
 def get_integrity_sum_sql_all(
@@ -21,7 +19,7 @@ def get_integrity_sum_sql_all(
 
 
 def get_integrity_sum_all_mssql(
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     sql_table_name: tuple[str, str],
     partition_columns: list[str],
 ) -> list[dict]:

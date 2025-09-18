@@ -4,14 +4,15 @@ from bmsdna.sql_utils.lake.types import FieldWithType, LakeMetadata, SQLField
 from .source import ImportSource
 import os
 import urllib.parse
-from bmsdna.sql_utils.query import build_connection_string
+from bmsdna.sql_utils.query import build_connection_string, get_connection, ConnectionParams
 from .sqlschema import convert_to_sql_field
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     import aiohttp
+    from bmsdna.sql_utils.dbapi import Connection
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class LakeSource(ImportSource):
     async def write_to_sql_server(
         self,
         target_table: str | tuple[str, str],
-        connection_string: str | dict,
+        connection_string: "ConnectionParams",
         partition_filters: dict | None,
         select: list[str] | None,
     ) -> WriteInfo:
@@ -91,12 +92,14 @@ class LakeSource(ImportSource):
                 ]
             )
         # r = make_lake_api_request(url_part, filters, format="arrow-stream", auth=lake_api_auth)
-        if self.use_json_insert:
+        conn_str_maybe = connection_string() if callable(connection_string) else connection_string
+        if self.use_json_insert or (not isinstance(conn_str_maybe, str) and not isinstance(conn_str_maybe, dict)):
             from .json_insert import insert_into_table_via_json
-            import pyodbc
             import aiohttp
 
-            with pyodbc.connect(build_connection_string(connection_string, odbc=True)) as con:
+            con = None
+            try:
+                con = get_connection(conn_str_maybe)
                 schema = self.get_schema()
                 filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                 async with aiohttp.ClientSession() as session:
@@ -109,13 +112,16 @@ class LakeSource(ImportSource):
                             json_batches=r, table_name=target_table, connection=con, schema=filtered_schema
                         )
                         col_names = [f.column_name for f in filtered_schema]
+            finally:
+                if con is not None:
+                    con.close()
             return WriteInfo(column_names=col_names, table_name=target_table)
         else:
             logger.info(f"Get Data from {full_url}")
             from lakeapi2sql.bulk_insert import insert_http_arrow_stream_to_sql
 
             table_str = target_table if isinstance(target_table, str) else target_table[0] + "." + target_table[1]
-            connection_string_sql = build_connection_string(connection_string, odbc=False)
+            connection_string_sql = build_connection_string(conn_str_maybe, odbc=False)
             res = await insert_http_arrow_stream_to_sql(
                 connection_string_sql, table_str, full_url, self.lake_api_auth, None
             )

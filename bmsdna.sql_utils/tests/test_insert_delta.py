@@ -41,7 +41,7 @@ async def test_logging(connection: "DB_Connection"):
 async def test_insert_user2_delta(connection: "DB_Connection"):
     from bmsdna.sql_utils.db_io.delta_source import DeltaSource
 
-    s = DeltaSource("tests/data/user2")
+    s = DeltaSource("tests/data/user2", use_json_insert=True)
     from .utils import execute_compare
 
     await execute_compare(

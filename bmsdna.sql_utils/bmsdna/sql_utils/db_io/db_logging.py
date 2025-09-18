@@ -3,14 +3,12 @@ import logging
 import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
-    import pyodbc
-    import pytds
-    import mssql_python
+    from bmsdna.sql_utils.dbapi import Connection
 
 logger = logging.getLogger(__name__)
 
 
-def init_logging(conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection"):
+def init_logging(conn: "Connection"):
     from .sqlschema import create_table, SQLField
 
     create_table(
@@ -33,7 +31,7 @@ warned_logging = False
 
 
 def insert_into_log(
-    con: "pyodbc.Connection|pytds.Connection| mssql_python.Connection",
+    con: "Connection",
     table_name: Union[str, tuple[str, str]],
     type: Literal["start_load", "end_load", "error", "schema_drift", "start_merge", "start_full", "skip_load"],
     *,
