@@ -8,6 +8,7 @@ import json
 if TYPE_CHECKING:
     import pyodbc
     import pytds
+    import mssql_python
     import pyarrow as pa
 
 
@@ -15,7 +16,7 @@ async def insert_into_table_via_json(
     *,
     json_batches: AsyncIterable[str],
     table_name: tuple[str, str] | str,
-    connection: "pyodbc.Connection | pytds.Connection",
+    connection: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     schema: list[SQLField],
     colnames: list[str] | None = None,
 ):
@@ -48,7 +49,7 @@ async def insert_into_table_via_json_from_batches(
     *,
     reader: "pa.RecordBatchReader",
     table_name: tuple[str, str] | str,
-    connection: "pyodbc.Connection | pytds.Connection",
+    connection: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     schema: list[SQLField],
     colnames: list[str] | None = None,
 ):

@@ -30,6 +30,16 @@ class DeltaPolarsSource(ImportSource):
         self.use_json_insert = use_json_insert
         self.batch_size = 1048576 if not use_json_insert else 1000
 
+    def _get_conn(self, connection_string: str | dict):
+        try:
+            import mssql_python  # type: ignore
+
+            return mssql_python.Connection(build_connection_string(connection_string, odbc=False))
+        except ImportError:
+            import pyodbc
+
+            return pyodbc.connect(build_connection_string(connection_string, odbc=True))
+
     async def write_to_sql_server(
         self,
         target_table: str | tuple[str, str],
@@ -56,9 +66,8 @@ class DeltaPolarsSource(ImportSource):
         connection_string_sql = build_connection_string(connection_string, odbc=False)
         if self.use_json_insert:
             from .json_insert import insert_into_table_via_json_from_batches
-            import pyodbc
 
-            with pyodbc.connect(build_connection_string(connection_string, odbc=True)) as con:
+            with self._get_conn(connection_string) as con:
                 schema = self.get_schema()
                 filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                 await insert_into_table_via_json_from_batches(

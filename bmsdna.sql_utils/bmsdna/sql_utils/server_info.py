@@ -5,6 +5,7 @@ from .query import sql_quote_name
 if TYPE_CHECKING:
     import pytds
     import pyodbc
+    import mssql_python
 
 
 SQL_Server_Editions = Literal[
@@ -79,14 +80,16 @@ class DBInfo:
                 return self.azure_sku not in ["S0", "S1", "S2"]
         return True
 
-    def azure_scale_to(self, conn: "pyodbc.Connection|pytds.Connection", azure_sku: Azure_SKUs) -> bool:
+    def azure_scale_to(
+        self, conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection", azure_sku: Azure_SKUs
+    ) -> bool:
         with conn.cursor() as cur:
             if azure_sku == self.azure_sku:
                 return False
         with conn.cursor() as cur:
             db_quoted = sql_quote_name(self.db_name)
             cur.execute(
-                f"ALTER DATABASE {db_quoted} MODIFY (EDITION = '{ get_azure_edition(azure_sku)}, SERVICE_OBJECTIVE='{azure_sku}' )"
+                f"ALTER DATABASE {db_quoted} MODIFY (EDITION = '{get_azure_edition(azure_sku)}, SERVICE_OBJECTIVE='{azure_sku}' )"
             )
         try:
             with conn.cursor() as cur:
@@ -102,7 +105,7 @@ class DBInfo:
         return True
 
 
-def get_db_info(conn: "pyodbc.Connection|pytds.Connection"):
+def get_db_info(conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection") -> DBInfo:
     with conn.cursor() as cursor:
         cursor.execute(
             "select cast(SERVERPROPERTY('EditionID') as nvarchar(100)), cast(SERVERPROPERTY('Edition') as nvarchar(100)), dB_NAME(), DB_ID()"

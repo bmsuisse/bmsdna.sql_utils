@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 if TYPE_CHECKING:
     import pyodbc
+    import mssql_python
 
 
 class Cursor(Protocol):
@@ -41,4 +42,4 @@ class ConnectionT(Protocol):
     def cursor(self, *args, **kwargs) -> Cursor: ...
 
 
-Connection: TypeAlias = "ConnectionT | pyodbc.Connection"
+Connection: TypeAlias = "ConnectionT | pyodbc.Connection | mssql_python.Connection"

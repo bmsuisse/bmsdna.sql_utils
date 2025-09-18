@@ -19,10 +19,12 @@ import logging
 from datetime import datetime
 from bmsdna.sql_utils.db_io.meta_sql_store import set_extended_property, get_extended_property
 from ..case_preserving_set import CasePreservingSet
+import mssql_python
 
 if TYPE_CHECKING:
     import pyodbc
     import pytds
+    import mssql_python
     from bmsdna.sql_utils.db_io.source import WriteInfo
     from asyncio import Task
 
@@ -63,7 +65,7 @@ async def _do_merge(
     source: ImportSource,
     target_table: tuple[str, str],
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection",
+    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
     connection_string: str | dict,
@@ -90,7 +92,7 @@ async def _do_merge_updatecol(
     source: ImportSource,
     target_table: tuple[str, str],
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection",
+    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
     update_col: str,
@@ -172,7 +174,7 @@ FULL_TEMP_MODES = Literal["global_temp", "table_swap"]
 @dataclass(frozen=True)
 class AfterSwapParams:
     target_table: tuple[str, str]
-    conn: "pyodbc.Connection | pytds.Connection"
+    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection"
     partition_filter: Optional[dict]
     table_per_partition: bool = False
 
@@ -182,7 +184,7 @@ async def _do_full_load(
     source: ImportSource,
     target_table: tuple[str, str],
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection",
+    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     partition_filter: Optional[dict],
     connection_string: str | dict,
     is_empty: bool,
@@ -244,6 +246,17 @@ async def _do_full_load(
     return [temp_table_name]
 
 
+def _get_conn(connection: str | dict):
+    try:
+        import mssql_python
+
+        return mssql_python.Connection(build_connection_string(connection, odbc=False))
+    except ImportError:
+        import pyodbc
+
+        return pyodbc.connect(build_connection_string(connection, odbc=True))
+
+
 async def insert_into_table_partition(
     *,
     source: ImportSource,
@@ -274,10 +287,8 @@ async def insert_into_table_partition(
         ]
     partition_filter_str = _str_part_filter(partition_filter)
     temp_tables = []
-    connstr_odbc = build_connection_string(connection, odbc=True)
-    import pyodbc
 
-    with pyodbc.connect(connstr_odbc) as conn:
+    with _get_conn(connection) as conn:
         if not skip_create_table:
             try:
                 init_logging(conn)
@@ -362,7 +373,7 @@ async def insert_into_table_partition(
 
 
 def execute_full_load(
-    conn: "pyodbc.Connection | pytds.Connection",
+    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     sql_table_name: tuple[str, str],
     source_info: "WriteInfo",
     partition_filter: Optional[dict],
@@ -389,7 +400,7 @@ def execute_full_load(
 
 
 async def execute_merge(
-    conn: "pyodbc.Connection | pytds.Connection",
+    conn: "pyodbc.Connection | pytds.Connection| mssql_python.Connection",
     sql_table_name: tuple[str, str],
     source_info: "WriteInfo",
     partition_filter: Optional[dict],
@@ -462,7 +473,7 @@ def _get_select(c: str, constant_values: Mapping, calculated_columns: Mapping):
 
 async def has_delta(
     source: ImportSource,
-    connection: "str | dict | pyodbc.Connection | pytds.Connection",
+    connection: "str | dict | pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     target_table: tuple[str, str],
 ):
     owns_conn = False
@@ -505,15 +516,12 @@ async def _execute(
     await_partitions=True,
     force=False,
 ):
-    import pyodbc
-
     calculated_columns = calculated_columns or dict()
     part_values = source.get_partition_values()
     schema = source.get_schema()
-    connstr_odbc = build_connection_string(connection_string, odbc=True)
     mod_date = source.get_last_change_date()
     if not force and mod_date:
-        with pyodbc.connect(connstr_odbc) as conn:
+        with _get_conn(connection_string) as conn:
             ld = get_extended_property(conn, target_table, "sql_utils_load_date")
             if ld:
                 dt = iso_parse(ld)
@@ -591,8 +599,9 @@ async def _execute(
             select_4view = "\r\n UNION ALL\r\n ".join(table_sql)
             view = f"CREATE OR ALTER VIEW {sql_quote_name(target_table)} AS \r\n{select_4view}"
 
-            with pyodbc.connect(connstr_odbc) as conn:
-                conn.execute(view)
+            with _get_conn(connection_string) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(view)
 
     else:
         constant_values = source.get_constant_values(None, select=select)
@@ -615,7 +624,7 @@ async def _execute(
             table_callback=_make_list(table_callback),
         )
 
-    with pyodbc.connect(connstr_odbc) as conn:
+    with _get_conn(connection_string) as conn:
         set_extended_property(
             conn,
             "View" if table_per_partition and part_values is not None and len(part_values) > 0 else "Table",
@@ -646,8 +655,6 @@ async def insert_into_table(
     await_partitions=True,
     force=False,
 ):
-    import pyodbc
-
     try:
         await _execute(
             source=source,
@@ -667,8 +674,7 @@ async def insert_into_table(
         )
     except Exception as err:
         if "Cannot create a row of size" in str(err):
-            connstr_odbc = build_connection_string(connection_string, odbc=True)
-            with pyodbc.connect(connstr_odbc) as conn:
+            with _get_conn(connection_string) as conn:
                 with conn.cursor() as cur:
                     cur.execute(f"drop table {sql_quote_name(target_table)}")
             await _execute(
