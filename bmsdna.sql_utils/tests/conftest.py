@@ -1,4 +1,4 @@
-import pyodbc
+import mssql_python
 import pytest
 import os
 import logging
@@ -34,10 +34,10 @@ class DB_Connection:
                 "PWD": "MyPass@word4tests",
                 "MultipleActiveResultSets": "True",
             },
-            odbc=True,
+            odbc=False,
         )
         self.conn_str_master = conn_str
-        self.conn = pyodbc.connect(conn_str, autocommit=True)
+        self.conn = mssql_python.connect(conn_str, autocommit=True)
         with self.conn.cursor() as cursor:
             try:
                 cursor.execute(" drop DATABASE if exists sql_utils_test")
@@ -61,7 +61,7 @@ class DB_Connection:
         return self
 
     def new_connection(self):
-        return pyodbc.connect(self.conn_str, autocommit=True)
+        return mssql_python.connect(self.conn_str, autocommit=True)
 
     def cursor(self):
         return self.conn.cursor()

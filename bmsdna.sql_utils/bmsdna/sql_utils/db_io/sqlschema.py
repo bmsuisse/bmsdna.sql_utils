@@ -8,6 +8,7 @@ import sqlglot.expressions as ex
 if TYPE_CHECKING:
     import pyodbc
     import pytds
+    import mssql_python
 logger = logging.getLogger(__name__)
 
 table_name_type = Union[str, tuple[str, str]]
@@ -207,7 +208,7 @@ def get_sql_for_schema(
         tbl_name_pk = (
             table_name.removeprefix("##") if isinstance(table_name, str) else table_name[0] + "_" + table_name[1]
         )
-        pkdef = f", CONSTRAINT {sql_quote_name('PK_'+tbl_name_pk)}  PRIMARY KEY({pkcols})"
+        pkdef = f", CONSTRAINT {sql_quote_name('PK_' + tbl_name_pk)}  PRIMARY KEY({pkcols})"
     create_sql = f"CREATE TABLE {sql_quote_name(table_name)}({cols}{pkdef}) "
 
     if with_exist_check:
@@ -255,7 +256,7 @@ def col_approx_eq(type1: str, type2: str | ex.DataType | ex.DataType.Type):
 class CreateTableCallbackParams:
     table_name: table_name_type
     schema: list[SQLField]
-    conn: "pyodbc.Connection | pytds.Connection"
+    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection"
     primary_keys: list[str] | None
     action: Literal["create", "adjusted", "none"]
     truncated: bool
@@ -264,7 +265,7 @@ class CreateTableCallbackParams:
 def create_table(
     table_name: table_name_type,
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection",
+    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
     primary_keys: list[str] | None,
     overwrite: bool,
     default_values: Mapping[str, tuple[SQLField, Any]] | None = None,
@@ -407,7 +408,11 @@ def create_table(
             )
 
 
-def is_table_empty(conn: "pyodbc.Connection|pytds.Connection", table_name: table_name_type, filter: Optional[str]):
+def is_table_empty(
+    conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection",
+    table_name: table_name_type,
+    filter: Optional[str],
+):
     with conn.cursor() as cur:
         cur.execute("SELECT TOP 1 * FROM " + sql_quote_name(table_name) + f" WHERE {filter or '1=1'}")
         res = cur.fetchall()
@@ -417,7 +422,10 @@ def is_table_empty(conn: "pyodbc.Connection|pytds.Connection", table_name: table
 
 
 def get_max_update_col_value(
-    conn: "pyodbc.Connection|pytds.Connection", table_name: table_name_type, update_col: str, filter: Optional[str]
+    conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection",
+    table_name: table_name_type,
+    update_col: str,
+    filter: Optional[str],
 ):
     with conn.cursor() as cur:
         cur.execute(
