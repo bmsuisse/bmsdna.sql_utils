@@ -21,7 +21,7 @@ def get_integrity_sum_sql_all(
 
 
 def get_integrity_sum_all_mssql(
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     sql_table_name: tuple[str, str],
     partition_columns: list[str],
 ) -> list[dict]:

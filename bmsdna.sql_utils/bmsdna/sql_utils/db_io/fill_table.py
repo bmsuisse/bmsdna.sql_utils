@@ -22,9 +22,7 @@ from ..case_preserving_set import CasePreservingSet
 import mssql_python
 
 if TYPE_CHECKING:
-    import pyodbc
-    import pytds
-    import mssql_python
+    from bmsdna.sql_utils.dbapi import Connection
     from bmsdna.sql_utils.db_io.source import WriteInfo
     from asyncio import Task
 
@@ -65,7 +63,7 @@ async def _do_merge(
     source: ImportSource,
     target_table: tuple[str, str],
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
     connection_string: str | dict,
@@ -92,7 +90,7 @@ async def _do_merge_updatecol(
     source: ImportSource,
     target_table: tuple[str, str],
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
     update_col: str,
@@ -174,7 +172,7 @@ FULL_TEMP_MODES = Literal["global_temp", "table_swap"]
 @dataclass(frozen=True)
 class AfterSwapParams:
     target_table: tuple[str, str]
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection"
+    conn: "Connection"
     partition_filter: Optional[dict]
     table_per_partition: bool = False
 
@@ -184,7 +182,7 @@ async def _do_full_load(
     source: ImportSource,
     target_table: tuple[str, str],
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     partition_filter: Optional[dict],
     connection_string: str | dict,
     is_empty: bool,
@@ -373,7 +371,7 @@ async def insert_into_table_partition(
 
 
 def execute_full_load(
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     sql_table_name: tuple[str, str],
     source_info: "WriteInfo",
     partition_filter: Optional[dict],
@@ -400,7 +398,7 @@ def execute_full_load(
 
 
 async def execute_merge(
-    conn: "pyodbc.Connection | pytds.Connection| mssql_python.Connection",
+    conn: "Connection",
     sql_table_name: tuple[str, str],
     source_info: "WriteInfo",
     partition_filter: Optional[dict],
@@ -473,7 +471,7 @@ def _get_select(c: str, constant_values: Mapping, calculated_columns: Mapping):
 
 async def has_delta(
     source: ImportSource,
-    connection: "str | dict | pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    connection: "str | dict | Connection",
     target_table: tuple[str, str],
 ):
     owns_conn = False

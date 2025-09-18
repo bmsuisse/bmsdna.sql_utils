@@ -6,9 +6,7 @@ from bmsdna.sql_utils.query import sql_quote_name, sql_quote_value
 import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
-    import pyodbc
-    import pytds
-    import mssql_python
+    from bmsdna.sql_utils.dbapi import Connection
 logger = logging.getLogger(__name__)
 
 table_name_type = Union[str, tuple[str, str]]
@@ -256,7 +254,7 @@ def col_approx_eq(type1: str, type2: str | ex.DataType | ex.DataType.Type):
 class CreateTableCallbackParams:
     table_name: table_name_type
     schema: list[SQLField]
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection"
+    conn: "Connection"
     primary_keys: list[str] | None
     action: Literal["create", "adjusted", "none"]
     truncated: bool
@@ -265,7 +263,7 @@ class CreateTableCallbackParams:
 def create_table(
     table_name: table_name_type,
     schema: list[SQLField],
-    conn: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     primary_keys: list[str] | None,
     overwrite: bool,
     default_values: Mapping[str, tuple[SQLField, Any]] | None = None,
@@ -409,7 +407,7 @@ def create_table(
 
 
 def is_table_empty(
-    conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     table_name: table_name_type,
     filter: Optional[str],
 ):
@@ -422,7 +420,7 @@ def is_table_empty(
 
 
 def get_max_update_col_value(
-    conn: "pyodbc.Connection|pytds.Connection | mssql_python.Connection",
+    conn: "Connection",
     table_name: table_name_type,
     update_col: str,
     filter: Optional[str],

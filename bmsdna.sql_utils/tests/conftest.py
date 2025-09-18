@@ -61,7 +61,8 @@ class DB_Connection:
         return self
 
     def new_connection(self):
-        return mssql_python.connect(self.conn_str, autocommit=True)
+        conn = mssql_python.connect(self.conn_str, autocommit=True)
+        return conn
 
     def cursor(self):
         return self.conn.cursor()
