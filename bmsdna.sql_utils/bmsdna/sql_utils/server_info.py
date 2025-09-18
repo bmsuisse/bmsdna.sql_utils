@@ -3,9 +3,7 @@ from typing import TYPE_CHECKING, Literal
 from .query import sql_quote_name
 
 if TYPE_CHECKING:
-    import pytds
-    import pyodbc
-    import mssql_python
+    from bmsdna.sql_utils.dbapi import Connection
 
 
 SQL_Server_Editions = Literal[
