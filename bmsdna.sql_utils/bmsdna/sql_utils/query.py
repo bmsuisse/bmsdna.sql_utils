@@ -6,6 +6,17 @@ ODBC_DRIVER: str | None = None
 drivers: list[str] | None = None
 
 
+def get_connection(dict_dt: dict | str):
+    try:
+        import mssql_python  # type: ignore
+
+        return mssql_python.Connection(build_connection_string(dict_dt, odbc=False))
+    except ImportError:
+        import pyodbc
+
+        return pyodbc.connect(build_connection_string(dict_dt, odbc=True))
+
+
 def build_connection_string(dict_dt: dict | str, *, odbc: bool = False, odbc_driver: str | None = None):
     if isinstance(dict_dt, str) and not odbc:
         return dict_dt

@@ -1,15 +1,14 @@
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    import pyodbc
-    import pytds
+    from bmsdna.sql_utils.dbapi import Connection
     import mssql_python
 
 from bmsdna.sql_utils import sql_quote_name, sql_quote_value
 
 
 def get_extended_property(
-    con: "pyodbc.Connection | pytds.Connection| mssql_python.Connection",
+    con: "Connection",
     tbl_name: tuple[str, str],
     name: str,
 ) -> str | None:
@@ -23,7 +22,7 @@ def get_extended_property(
 
 
 def set_extended_property(
-    con: "pyodbc.Connection | pytds.Connection | mssql_python.Connection",
+    con: "Connection",
     object_type: Literal["Table", "View"],
     tbl_name: tuple[str, str],
     name: str,

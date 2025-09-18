@@ -61,7 +61,8 @@ async def execute_compare(
         assert df1.shape == df2.shape, "shape must equal"
 
     with connection.new_connection() as con:
-        con.execute(f"delete from {target_table_sql} where ascii(cast(newid() as varchar(100)))<ascii('A')")
+        with con.cursor() as cur:
+            cur.execute(f"delete from {target_table_sql} where ascii(cast(newid() as varchar(100)))<ascii('A')")
 
     await insert_into_table(
         source=source,
