@@ -1,6 +1,6 @@
 [project]
 name = "bmsdna-sql-utils"
-version = "0.14.1"
+version = "0.14.2"
 description = ""
 authors = [
     { name = "Adrian Ehrsam", email = "adrian.ehrsam@bmsuisse.ch" },
@@ -25,12 +25,12 @@ db-io = [
 ]
 delta = [
     "duckdb",
-    "deltalake >=0.16.4,<1.0",
+    "deltalake >=0.16.4",
     "deltalake2db >=0.3.4",
 ]
 db2delta = [
     "duckdb >=1.2",
-    "deltalake >=0.16.4,<1.0",
+    "deltalake >=0.16.4",
     "arrow-odbc",
     "deltalake2db",
     "aiohttp",
