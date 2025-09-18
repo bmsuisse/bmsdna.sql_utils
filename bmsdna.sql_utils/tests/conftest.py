@@ -61,6 +61,7 @@ class DB_Connection:
                 for sql in sqls:
                     with conn.cursor() as cursor:
                         cursor.execute(sql)
+            conn.commit()
 
         self.conn_str = conn_str.replace("database=master", "database=" + self.db_name).replace(
             "Database=master", "Database=" + self.db_name
