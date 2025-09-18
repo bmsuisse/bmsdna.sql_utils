@@ -19,10 +19,10 @@ import logging
 from datetime import datetime
 from bmsdna.sql_utils.db_io.meta_sql_store import set_extended_property, get_extended_property
 from ..case_preserving_set import CasePreservingSet
-import mssql_python
 
 if TYPE_CHECKING:
     from bmsdna.sql_utils.dbapi import Connection
+    from bmsdna.sql_utils.query import ConnectionParams
     from bmsdna.sql_utils.db_io.source import WriteInfo
     from asyncio import Task
 
@@ -66,7 +66,7 @@ async def _do_merge(
     conn: "Connection",
     partition_filter: Optional[dict],
     primary_keys: list[str],
-    connection_string: str | dict,
+    connection_string: "ConnectionParams",
     select: list[str] | None,
     temp_table_callback: list[Callable[[CreateTableCallbackParams], Any]] | None,
     constant_values: Mapping[str, tuple[SQLField, Any]] | None,
@@ -94,7 +94,7 @@ async def _do_merge_updatecol(
     partition_filter: Optional[dict],
     primary_keys: list[str],
     update_col: str,
-    connection_string: str | dict,
+    connection_string: "ConnectionParams",
     select: list[str] | None,
     table_per_partition: bool,
     constant_values: Mapping[str, tuple[SQLField, Any]] | None,
@@ -184,7 +184,7 @@ async def _do_full_load(
     schema: list[SQLField],
     conn: "Connection",
     partition_filter: Optional[dict],
-    connection_string: str | dict,
+    connection_string: "ConnectionParams",
     is_empty: bool,
     table_per_partition: bool,
     select: list[str] | None,
@@ -248,7 +248,7 @@ async def insert_into_table_partition(
     *,
     source: ImportSource,
     target_table: tuple[str, str],
-    connection: str | dict,
+    connection: "ConnectionParams",
     partition_filter: Optional[dict],
     schema: list[SQLField],
     primary_keys: list[str] | None,
@@ -484,7 +484,7 @@ async def has_delta(
 
 async def _execute(
     source: ImportSource,
-    connection_string: str | dict,
+    connection_string: "ConnectionParams",
     target_table: tuple[str, str],
     primary_keys: list[str] | None = None,
     update_col: Optional[str] = None,
