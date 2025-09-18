@@ -37,30 +37,35 @@ class DB_Connection:
             odbc=False,
         )
         self.conn_str_master = conn_str
+        self.db_name = "sql_utils_test_" + str(os.getpid()) + "_" + str(os.urandom(4).hex())
         with mssql_python.connect(conn_str, autocommit=True) as conn:
             with conn.cursor() as cursor:
                 try:
-                    cursor.execute("""DECLARE @kill varchar(8000) = '';  
+                    cursor.execute(
+                        """DECLARE @kill varchar(8000) = '';  
     SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';'  
     FROM sys.dm_exec_sessions
-    WHERE database_id  = db_id('sql_utils_test')
+    WHERE database_id  = db_id(?)
 
-    EXEC(@kill);""")
-                    cursor.execute(" drop DATABASE if exists sql_utils_test")
-                    cursor.execute("CREATE DATABASE sql_utils_test")
+    EXEC(@kill);""",
+                        (self.db_name,),
+                    )
+                    cursor.execute(f" drop DATABASE if exists {self.db_name}")
+                    cursor.execute(f"CREATE DATABASE {self.db_name}")
                 except Exception as e:
                     logger.error("Error drop creating db", exc_info=e)
             with conn.cursor() as cursor:
-                cursor.execute("USE sql_utils_test")
+                cursor.execute(f"USE {self.db_name}")
             with open("tests/sqls/init.sql", encoding="utf-8-sig") as f:
                 sqls = f.read().replace("\r\n", "\n").split("\nGO\n")
                 for sql in sqls:
                     with conn.cursor() as cursor:
                         cursor.execute(sql)
-        self.conn_str = conn_str.replace("database=master", "database=sql_utils_test").replace(
-            "Database=master", "Database=sql_utils_test"
+
+        self.conn_str = conn_str.replace("database=master", "database=" + self.db_name).replace(
+            "Database=master", "Database=" + self.db_name
         )
-        if "sql_utils_test" not in self.conn_str:
+        if self.db_name not in self.conn_str:
             raise ValueError("Database not created correctly")
 
     def __enter__(self):
@@ -69,6 +74,23 @@ class DB_Connection:
     def new_connection(self):
         conn = mssql_python.connect(self.conn_str, autocommit=True)
         return conn
+
+    def close(self):
+        with mssql_python.connect(self.conn_str_master, autocommit=True) as conn:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute(
+                        """DECLARE @kill varchar(8000) = '';  
+    SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';'  
+    FROM sys.dm_exec_sessions
+    WHERE database_id  = db_id(?)
+
+    EXEC(@kill);""",
+                        (self.db_name,),
+                    )
+                    cursor.execute(f" drop DATABASE if exists {self.db_name}")
+                except Exception as e:
+                    logger.error("Error drop creating db", exc_info=e)
 
 
 @pytest.fixture(scope="session")
@@ -89,6 +111,7 @@ def spawn_sql():
 def connection(spawn_sql):
     c = DB_Connection()
     yield c
+    c.close()
 
 
 @pytest.fixture(scope="session")

@@ -52,17 +52,14 @@ class DeltaSource(ImportSource):
                     from .json_insert import insert_into_table_via_json_from_batches
 
                     con = None
-                    try:
-                        con = get_connection(conn_str_maybe)
+                    with get_connection(conn_str_maybe) as con:
                         schema = self.get_schema()
                         filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                         await insert_into_table_via_json_from_batches(
                             reader=record_batch_reader, table_name=target_table, connection=con, schema=filtered_schema
                         )
                         col_names = [f.column_name for f in filtered_schema]
-                    finally:
-                        if con is not None:
-                            con.close()
+                        con.commit()
                 else:
                     from bmsdna.sql_utils.query import build_connection_string
 

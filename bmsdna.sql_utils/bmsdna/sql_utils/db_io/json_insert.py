@@ -4,6 +4,9 @@ from bmsdna.sql_utils.query import sql_quote_name
 from bmsdna.sql_utils.lake import SQLField
 from typing import TYPE_CHECKING, AsyncIterable
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from bmsdna.sql_utils.dbapi import Connection
@@ -27,6 +30,7 @@ async def insert_into_table_via_json(
     async for batch_json in json_batches:
         with connection.cursor() as cursor:
             cursor.execute(insert_to_tmp_tbl_stmt, (batch_json,))
+            logger.info(f"Inserted {cursor.rowcount} rows")
 
 
 async def _batch_reader_to_json(reader: "pa.RecordBatchReader"):
