@@ -2,16 +2,18 @@ from datetime import datetime, timezone
 
 from .source import ImportSource, WriteInfo
 import urllib.parse
-from bmsdna.sql_utils.query import build_connection_string
+from bmsdna.sql_utils.query import get_connection
 import logging
 from bmsdna.sql_utils.lake.types import FieldWithType, SQLField
 from bmsdna.sql_utils.lake.type_fromarrow import recursive_get_type
 from bmsdna.sql_utils.query import sql_quote_name
 from .sqlschema import with_max_str_length
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     import deltalake
+    from bmsdna.sql_utils.query import ConnectionParams
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,20 +32,10 @@ class DeltaPolarsSource(ImportSource):
         self.use_json_insert = use_json_insert
         self.batch_size = 1048576 if not use_json_insert else 1000
 
-    def _get_conn(self, connection_string: str | dict):
-        try:
-            import mssql_python  # type: ignore
-
-            return mssql_python.Connection(build_connection_string(connection_string, odbc=False))
-        except ImportError:
-            import pyodbc
-
-            return pyodbc.connect(build_connection_string(connection_string, odbc=True))
-
     async def write_to_sql_server(
         self,
         target_table: str | tuple[str, str],
-        connection_string: str | dict,
+        connection_string: "ConnectionParams",
         partition_filters: dict | None,
         select: list[str] | None,
     ) -> WriteInfo:
@@ -63,18 +55,28 @@ class DeltaPolarsSource(ImportSource):
 
         record_batch_reader = pyarrow.RecordBatchReader.from_batches(arrow_schema, _to_batches())
         table_str = target_table if isinstance(target_table, str) else target_table[0] + "." + target_table[1]
-        connection_string_sql = build_connection_string(connection_string, odbc=False)
-        if self.use_json_insert:
+        conn_str_maybe = connection_string() if callable(connection_string) else connection_string
+
+        if self.use_json_insert or not (isinstance(conn_str_maybe, str) or isinstance(conn_str_maybe, dict)):
             from .json_insert import insert_into_table_via_json_from_batches
 
-            with self._get_conn(connection_string) as con:
+            con = None
+            try:
+                con = get_connection(conn_str_maybe)
                 schema = self.get_schema()
                 filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                 await insert_into_table_via_json_from_batches(
                     reader=record_batch_reader, table_name=target_table, connection=con, schema=filtered_schema
                 )
                 col_names = [f.column_name for f in filtered_schema]
+            finally:
+                if con is not None:
+                    con.close()
         else:
+            from bmsdna.sql_utils.query import build_connection_string
+
+            connection_string_sql = build_connection_string(conn_str_maybe, odbc=False)
+
             res = await insert_record_batch_to_sql(connection_string_sql, table_str, record_batch_reader, select)
             col_names = [f["name"] for f in res["fields"]]
             # r.raise_for_status()

@@ -1,12 +1,24 @@
-from typing import Any, Literal, Tuple, TypeAlias, Union, overload
+from typing import Any, Literal, Tuple, TypeAlias, Union, overload, TYPE_CHECKING, Callable
 from datetime import datetime
+from contextlib import closing
 
 ODBC_DRIVER: str | None = None
 
 drivers: list[str] | None = None
+if TYPE_CHECKING:
+    from bmsdna.sql_utils.dbapi import Connection
+
+ConnectionParams: TypeAlias = "Union[str, dict, Callable[[], Connection | str | dict]]"
 
 
-def get_connection(dict_dt: dict | str):
+def get_connection(dict_dt: "ConnectionParams | Connection") -> "Connection":
+    if callable(dict_dt):
+        res = dict_dt()
+        if isinstance(res, str) or isinstance(res, dict):
+            return get_connection(res)
+        return res
+    if not isinstance(dict_dt, dict) and not isinstance(dict_dt, str):
+        return dict_dt
     try:
         import mssql_python  # type: ignore
 
@@ -18,6 +30,8 @@ def get_connection(dict_dt: dict | str):
 
 
 def build_connection_string(dict_dt: dict | str, *, odbc: bool = False, odbc_driver: str | None = None):
+    if callable(dict_dt):
+        return dict_dt()
     if isinstance(dict_dt, str) and not odbc:
         return dict_dt
     global drivers

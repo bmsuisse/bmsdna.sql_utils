@@ -1,11 +1,12 @@
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping, Callable
 import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
     from bmsdna.sql_utils.lake.types import SQLField
+    from bmsdna.sql_utils.query import ConnectionParams
 
 
 @dataclass(frozen=True)
@@ -25,7 +26,7 @@ class ImportSource(ABC):
     async def write_to_sql_server(
         self,
         target_table: str | tuple[str, str],
-        connection_string: str | dict,
+        connection_string: "ConnectionParams",
         partition_filters: dict | None,
         select: list[str] | None = None,
     ) -> WriteInfo: ...

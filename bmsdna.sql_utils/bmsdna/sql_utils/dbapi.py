@@ -1,5 +1,6 @@
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
+from contextlib import closing
 
 if TYPE_CHECKING:
     import pyodbc
@@ -31,7 +32,7 @@ class Cursor(Protocol):
 
     def __enter__(self) -> "Cursor": ...
 
-    def __exit__(self, exc_type, exc_val, exc_tb): ...
+    def __exit__(self, *args, **kwargs): ...
 
 
 class ConnectionT(Protocol):
@@ -39,7 +40,11 @@ class ConnectionT(Protocol):
 
     def commit(self) -> None: ...
 
-    def cursor(self, *args, **kwargs) -> Cursor: ...
+    def cursor(self) -> Cursor: ...
+
+    def __enter__(self) -> "ConnectionT": ...
+
+    def __exit__(self, *args, **kwargs): ...
 
 
 Connection: TypeAlias = "ConnectionT | pyodbc.Connection | mssql_python.Connection"
