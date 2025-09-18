@@ -37,20 +37,26 @@ class DB_Connection:
             odbc=False,
         )
         self.conn_str_master = conn_str
-        self.conn = mssql_python.connect(conn_str, autocommit=True)
-        with self.conn.cursor() as cursor:
-            try:
-                cursor.execute(" drop DATABASE if exists sql_utils_test")
-                cursor.execute("CREATE DATABASE sql_utils_test")
-            except Exception as e:
-                logger.error("Error drop creating db", exc_info=e)
-        with self.conn.cursor() as cursor:
-            cursor.execute("USE sql_utils_test")
-        with open("tests/sqls/init.sql", encoding="utf-8-sig") as f:
-            sqls = f.read().replace("\r\n", "\n").split("\nGO\n")
-            for sql in sqls:
-                with self.conn.cursor() as cursor:
-                    cursor.execute(sql)
+        with mssql_python.connect(conn_str, autocommit=True) as conn:
+            with conn.cursor() as cursor:
+                try:
+                    cursor.execute("""DECLARE @kill varchar(8000) = '';  
+    SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';'  
+    FROM sys.dm_exec_sessions
+    WHERE database_id  = db_id('sql_utils_test')
+
+    EXEC(@kill);""")
+                    cursor.execute(" drop DATABASE if exists sql_utils_test")
+                    cursor.execute("CREATE DATABASE sql_utils_test")
+                except Exception as e:
+                    logger.error("Error drop creating db", exc_info=e)
+            with conn.cursor() as cursor:
+                cursor.execute("USE sql_utils_test")
+            with open("tests/sqls/init.sql", encoding="utf-8-sig") as f:
+                sqls = f.read().replace("\r\n", "\n").split("\nGO\n")
+                for sql in sqls:
+                    with conn.cursor() as cursor:
+                        cursor.execute(sql)
         self.conn_str = conn_str.replace("database=master", "database=sql_utils_test").replace(
             "Database=master", "Database=sql_utils_test"
         )
@@ -63,15 +69,6 @@ class DB_Connection:
     def new_connection(self):
         conn = mssql_python.connect(self.conn_str, autocommit=True)
         return conn
-
-    def cursor(self):
-        return self.conn.cursor()
-
-    def close(self):
-        self.conn.close()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.conn.close()
 
 
 @pytest.fixture(scope="session")
@@ -92,7 +89,6 @@ def spawn_sql():
 def connection(spawn_sql):
     c = DB_Connection()
     yield c
-    c.close()
 
 
 @pytest.fixture(scope="session")
