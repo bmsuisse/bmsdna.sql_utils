@@ -624,7 +624,7 @@ async def _execute(
 async def insert_into_table(
     *,
     source: ImportSource,
-    connection_string: str | dict,
+    connection_string: "ConnectionParams",
     target_table: tuple[str, str],
     primary_keys: list[str] | None = None,
     update_col: Optional[str] = None,
