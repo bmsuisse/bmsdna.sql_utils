@@ -21,9 +21,7 @@ def create_test_data():
             "datetime_tz": fake.date_time().astimezone(timezone.utc),
         }
         res.append(obj)
-    write_deltalake(
-        "tests/data/faker", pd.DataFrame(res), engine="rust", writer_properties=WriterProperties(compression="ZSTD")
-    )
+    write_deltalake("tests/data/faker", pd.DataFrame(res), writer_properties=WriterProperties(compression="ZSTD"))
 
 
 if __name__ == "__main__":
