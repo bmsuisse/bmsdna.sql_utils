@@ -28,10 +28,11 @@ async def insert_into_table_via_json(
         f"INSERT INTO {sql_quote_name(table_name)}({cols}) SELECT {cols} from openjson(?) with ({col_defs})"
     )
     logger.info(f"Inserting json batch into {table_name}")
-    async for batch_json in json_batches:
-        with connection.cursor() as cursor:
+    with connection.cursor() as cursor:
+        async for batch_json in json_batches:
             cursor.execute(insert_to_tmp_tbl_stmt, (batch_json,))
             logger.info(f"Inserted {cursor.rowcount} rows")
+    connection.commit()
 
 
 async def _batch_reader_to_json(reader: "pa.RecordBatchReader"):
