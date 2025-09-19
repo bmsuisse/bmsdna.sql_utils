@@ -38,7 +38,7 @@ class DB_Connection:
         )
         self.conn_str_master = conn_str
         self.db_name = "sql_utils_test_" + str(os.getpid()) + "_" + str(os.urandom(4).hex())
-        with mssql_python.connect(conn_str, autocommit=True) as conn:
+        with mssql_python.connect(conn_str, autocommit=True, timeout=30) as conn:
             with conn.cursor() as cursor:
                 try:
                     cursor.execute(
@@ -62,6 +62,7 @@ class DB_Connection:
                     with conn.cursor() as cursor:
                         cursor.execute(sql)
             conn.commit()
+            conn.close()
 
         self.conn_str = conn_str.replace("database=master", "database=" + self.db_name).replace(
             "Database=master", "Database=" + self.db_name
@@ -72,8 +73,11 @@ class DB_Connection:
     def __enter__(self):
         return self
 
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
     def new_connection(self):
-        conn = mssql_python.connect(self.conn_str, autocommit=True)
+        conn = mssql_python.connect(self.conn_str, autocommit=True, timeout=20)
         return conn
 
     def close(self):

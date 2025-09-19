@@ -298,7 +298,7 @@ async def insert_into_table_partition(
             is_target_empty = is_table_empty(
                 conn, target_table, _get_filter_sql(partition_filter if not table_per_partition else None)
             )
-
+            conn.commit()
             if is_target_empty or primary_keys is None or len(primary_keys) == 0:
                 temp_tables = await _do_full_load(
                     source=source,
