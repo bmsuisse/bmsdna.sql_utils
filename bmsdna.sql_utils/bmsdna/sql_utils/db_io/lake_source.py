@@ -97,9 +97,7 @@ class LakeSource(ImportSource):
             from .json_insert import insert_into_table_via_json
             import aiohttp
 
-            con = None
-            try:
-                con = get_connection(conn_str_maybe)
+            with get_connection(conn_str_maybe) as con:
                 schema = self.get_schema()
                 filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                 async with aiohttp.ClientSession() as session:
@@ -112,9 +110,7 @@ class LakeSource(ImportSource):
                             json_batches=r, table_name=target_table, connection=con, schema=filtered_schema
                         )
                         col_names = [f.column_name for f in filtered_schema]
-            finally:
-                if con is not None:
-                    con.close()
+                con.commit()
             return WriteInfo(column_names=col_names, table_name=target_table)
         else:
             logger.info(f"Get Data from {full_url}")

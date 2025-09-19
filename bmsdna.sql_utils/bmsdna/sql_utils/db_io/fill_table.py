@@ -298,7 +298,7 @@ async def insert_into_table_partition(
             is_target_empty = is_table_empty(
                 conn, target_table, _get_filter_sql(partition_filter if not table_per_partition else None)
             )
-
+            conn.commit()
             if is_target_empty or primary_keys is None or len(primary_keys) == 0:
                 temp_tables = await _do_full_load(
                     source=source,
@@ -618,6 +618,7 @@ async def _execute(
             "sql_utils_load_date",
             mod_date.isoformat() if mod_date else "",
         )
+        conn.commit()
 
 
 async def insert_into_table(
@@ -663,6 +664,7 @@ async def insert_into_table(
             with get_connection(connection_string) as conn:
                 with conn.cursor() as cur:
                     cur.execute(f"drop table {sql_quote_name(target_table)}")
+                conn.commit()
             await _execute(
                 source=source,
                 connection_string=connection_string,

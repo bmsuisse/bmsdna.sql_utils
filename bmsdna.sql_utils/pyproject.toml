@@ -1,6 +1,6 @@
 [project]
 name = "bmsdna-sql-utils"
-version = "0.14.1"
+version = "0.14.3"
 description = ""
 authors = [
     { name = "Adrian Ehrsam", email = "adrian.ehrsam@bmsuisse.ch" },
@@ -9,7 +9,7 @@ requires-python = "~=3.11"
 
 [project.optional-dependencies]
 mssql = [
-    "mssql-python>=0.10.0"]
+    "mssql-python>=0.11.0"]
 odbc = [
     "pyodbc >=5.0.1,<6",
     "aioodbc >=0.5.0",
@@ -25,12 +25,12 @@ db-io = [
 ]
 delta = [
     "duckdb",
-    "deltalake >=0.16.4,<1.0",
+    "deltalake >=0.16.4",
     "deltalake2db >=0.3.4",
 ]
 db2delta = [
     "duckdb >=1.2",
-    "deltalake >=0.16.4,<1.0",
+    "deltalake >=0.16.4",
     "arrow-odbc",
     "deltalake2db",
     "aiohttp",
