@@ -9,13 +9,10 @@ from bmsdna.sql_utils.query import sql_quote_name, sql_quote_value
 table_name_type = Union[str, tuple[str, str]]
 
 if TYPE_CHECKING:
-    import pyodbc
-    import pytds
+    from bmsdna.sql_utils.dbapi import Connection
 
 
-def get_primary_keys(
-    conn: "pyodbc.Connection|pytds.Connection", table_name: table_name_type | None
-) -> dict[table_name_type, list[str]]:
+def get_primary_keys(conn: "Connection", table_name: table_name_type | None) -> dict[table_name_type, list[str]]:
     with conn.cursor() as cur:
         cur.execute(
             """            
@@ -96,7 +93,7 @@ class InformationSchemaColInfo(BaseModel):
 
 
 def get_columns(
-    conn: "pyodbc.Connection|pytds.Connection", table_name: table_name_type | None
+    conn: "Connection", table_name: table_name_type | None
 ) -> dict[table_name_type, list[InformationSchemaColInfo]]:
     with conn.cursor() as cur:
         cur.execute(
@@ -136,7 +133,7 @@ SELECT sc.name as schema_name, t.name as table_name, c.name as col_name, c.gener
         return res_dict
 
 
-def get_compatibility_level(connection: "pyodbc.Connection | pytds.Connection") -> int:
+def get_compatibility_level(connection: "Connection") -> int:
     with connection.cursor() as cur:
         cur.execute(
             """

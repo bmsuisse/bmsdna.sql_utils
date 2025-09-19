@@ -6,13 +6,13 @@ from bmsdna.sql_utils.query import build_connection_string
 import logging
 from bmsdna.sql_utils.lake.types import SQLField
 from bmsdna.sql_utils.lake.type_fromarrow import recursive_get_type
-from bmsdna.sql_utils.query import sql_quote_name
+from bmsdna.sql_utils.query import get_connection
 from typing import TYPE_CHECKING
 from .sqlschema import with_max_str_length, get_str_length
 import sqlglot.expressions as ex
 
 if TYPE_CHECKING:
-    import pyspark
+    from bmsdna.sql_utils.query import ConnectionParams
     from pyspark.sql import DataFrame
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class SourceSpark(ImportSource):
     async def write_to_sql_server(
         self,
         target_table: str | tuple[str, str],
-        connection_string: str | dict,
+        connection_string: "ConnectionParams",
         partition_filters: dict | None,
         select: list[str] | None,
     ) -> WriteInfo:
@@ -51,8 +51,9 @@ class SourceSpark(ImportSource):
         from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
 
         table_str = target_table if isinstance(target_table, str) else target_table[0] + "." + target_table[1]
-        connection_string_sql = build_connection_string(connection_string, odbc=False)
-        if self.use_json_insert:
+        conn_str_maybe = connection_string() if callable(connection_string) else connection_string
+
+        if self.use_json_insert or not (isinstance(conn_str_maybe, str) or isinstance(conn_str_maybe, dict)):
             from .json_insert import insert_into_table_via_json
 
             iter = p_df.toJSON().toLocalIterator()
@@ -67,9 +68,7 @@ class SourceSpark(ImportSource):
                 if ls:
                     yield "[" + "\n, ".join(ls) + "]"
 
-            import pyodbc
-
-            with pyodbc.connect(build_connection_string(connection_string, odbc=True)) as con:
+            with get_connection(connection_string) as con:
                 schema = self.get_schema()
                 filtered_schema = schema if not select else [f for f in schema if f.column_name in select]
                 await insert_into_table_via_json(
@@ -87,7 +86,9 @@ class SourceSpark(ImportSource):
                     tbl = pa.Table.from_pandas(p_df.toPandas())
 
                 record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
-                res = await insert_record_batch_to_sql(connection_string_sql, table_str, record_batch_reader, select)
+                res = await insert_record_batch_to_sql(
+                    build_connection_string(conn_str_maybe), table_str, record_batch_reader, select
+                )
                 col_names = [f["name"] for f in res["fields"]]
             else:
                 col_names = [f.column_name for f in self.get_schema()]
