@@ -87,7 +87,7 @@ class SourceSpark(ImportSource):
 
                 record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
                 res = await insert_record_batch_to_sql(
-                    build_connection_string(conn_str_maybe), table_str, record_batch_reader, select
+                    build_connection_string(conn_str_maybe, odbc=True), table_str, record_batch_reader, select
                 )
                 col_names = [f["name"] for f in res["fields"]]
             else:

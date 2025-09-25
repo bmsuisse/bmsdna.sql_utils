@@ -1,4 +1,3 @@
-import mssql_python
 import pytest
 import os
 import logging
@@ -38,7 +37,9 @@ class DB_Connection:
         )
         self.conn_str_master = conn_str
         self.db_name = "sql_utils_test_" + str(os.getpid()) + "_" + str(os.urandom(4).hex())
-        with mssql_python.connect(conn_str, autocommit=True, timeout=30) as conn:
+        from bmsdna.sql_utils.query import get_connection
+
+        with get_connection(conn_str, autocommit=True, timeout=30) as conn:
             with conn.cursor() as cursor:
                 try:
                     cursor.execute(
@@ -77,11 +78,15 @@ class DB_Connection:
         self.close()
 
     def new_connection(self):
-        conn = mssql_python.connect(self.conn_str, autocommit=True, timeout=20)
+        from bmsdna.sql_utils.query import get_connection
+
+        conn = get_connection(self.conn_str, autocommit=True, timeout=20)
         return conn
 
     def close(self):
-        with mssql_python.connect(self.conn_str_master, autocommit=True) as conn:
+        from bmsdna.sql_utils.query import get_connection
+
+        with get_connection(self.conn_str_master, autocommit=True) as conn:
             with conn.cursor() as cursor:
                 try:
                     cursor.execute(

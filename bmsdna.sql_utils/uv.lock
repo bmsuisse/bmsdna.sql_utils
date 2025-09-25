@@ -240,7 +240,7 @@ wheels = [
 
 [[package]]
 name = "bmsdna-sql-utils"
-version = "0.14.3"
+version = "0.14.6"
 source = { editable = "." }
 
 [package.optional-dependencies]
@@ -315,7 +315,7 @@ requires-dist = [
     { name = "deltalake", marker = "extra == 'db2delta'", specifier = ">=0.16.4" },
     { name = "deltalake", marker = "extra == 'delta'", specifier = ">=0.16.4" },
     { name = "deltalake2db", marker = "extra == 'db2delta'" },
-    { name = "deltalake2db", marker = "extra == 'delta'", specifier = ">=0.3.4" },
+    { name = "deltalake2db", marker = "extra == 'delta'", specifier = ">=1.1.2" },
     { name = "duckdb", marker = "extra == 'db2delta'", specifier = ">=1.2" },
     { name = "duckdb", marker = "extra == 'delta'" },
     { name = "lakeapi2sql", marker = "extra == 'db-io'" },
@@ -673,16 +673,15 @@ wheels = [
 
 [[package]]
 name = "deltalake2db"
-version = "0.10.3"
+version = "1.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "deltalake" },
     { name = "polars" },
     { name = "sqlglot" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/14/2f/85348494f209141cdf9d815c66e91cd143bdb5f4daa4bd50f380073f7162/deltalake2db-0.10.3.tar.gz", hash = "sha256:8c13c7bcd512269765eff1e21d8b4b9273b2ec7162f3bc2e9b183ffd73840520", size = 156259, upload-time = "2025-09-19T11:42:24.005Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/1b/5ca0c3bfa6badb890a04bebe41fa8ffb340984365a6579ab6a81d503c2b2/deltalake2db-1.1.2.tar.gz", hash = "sha256:57a01c7284ea41dfe4c78238a2cdddebf965827fa46ee6446d205c94962956fd", size = 246543, upload-time = "2025-09-25T04:42:37.887Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/c0/edc22e6216785be54f873aeb7bb79fcb95c14dc160814ddc3bc7e75274f7/deltalake2db-0.10.3-py3-none-any.whl", hash = "sha256:97db118783b327687abd8831ccc228982b4c76adff18069c9ec1afd503590053", size = 15224, upload-time = "2025-09-19T11:42:22.809Z" },
+    { url = "https://files.pythonhosted.org/packages/be/bc/b2e4a4e77af0c1539bd31b6f1ec70530ad16203e0e9d90c2dea59b465375/deltalake2db-1.1.2-py3-none-any.whl", hash = "sha256:39e1d63a45c2b1f75ae7d796c25527c6de29bd7b64cafc195c3b9d230eccc60f", size = 19193, upload-time = "2025-09-25T04:42:36.011Z" },
 ]
 
 [[package]]

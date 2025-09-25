@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from bmsdna.sql_utils.dbapi import Connection
-    import mssql_python
 
 from bmsdna.sql_utils import sql_quote_name, sql_quote_value
 
