@@ -40,15 +40,12 @@ class SourceSpark(ImportSource):
         partition_filters: dict | None,
         select: list[str] | None,
     ) -> WriteInfo:
-        
-
         p_df = self.df
         if partition_filters:
             from pyspark.sql.functions import col, lit
 
             for k, v in partition_filters.items():
                 p_df = p_df.filter(col(k) == lit(v))
-        from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
 
         table_str = target_table if isinstance(target_table, str) else target_table[0] + "." + target_table[1]
         conn_str_maybe = connection_string() if callable(connection_string) else connection_string
@@ -56,6 +53,7 @@ class SourceSpark(ImportSource):
         if self.use_json_insert or not (isinstance(conn_str_maybe, str) or isinstance(conn_str_maybe, dict)):
             from .json_insert import insert_into_table_via_json
             from pyspark.sql.functions import to_json, struct, col
+
             iter = p_df.select(to_json(struct(col("*")))).toLocalIterator()
 
             async def _to_batches():
@@ -80,6 +78,8 @@ class SourceSpark(ImportSource):
                 col_names = [f.column_name for f in filtered_schema]
         else:
             import pyarrow as pa
+            from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
+
             if not p_df.isEmpty():
                 try:
                     tbl = p_df.toArrow()  # type: ignore

@@ -40,7 +40,6 @@ class DeltaPolarsSource(ImportSource):
         select: list[str] | None,
     ) -> WriteInfo:
         import polars
-        from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
         from deltalake2db import polars_scan_delta
 
         df = polars_scan_delta(self.delta_lake, conditions=partition_filters).collect()
@@ -71,6 +70,7 @@ class DeltaPolarsSource(ImportSource):
 
         else:
             from bmsdna.sql_utils.query import build_connection_string
+            from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
 
             connection_string_sql = build_connection_string(conn_str_maybe, odbc=False)
 
