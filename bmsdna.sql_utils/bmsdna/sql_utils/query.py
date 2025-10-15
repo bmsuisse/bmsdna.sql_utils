@@ -11,22 +11,38 @@ if TYPE_CHECKING:
 ConnectionParams: TypeAlias = "Union[str, dict, Callable[[], Connection | str | dict]]"
 
 
-def get_connection(dict_dt: "ConnectionParams | Connection") -> "Connection":
+def get_connection(
+    dict_dt: "ConnectionParams | Connection",
+    *,
+    timeout: int = 0,
+    connection_timeout: int = 30,
+    autocommit: bool = False,
+) -> "Connection":
     if callable(dict_dt):
         res = dict_dt()
         if isinstance(res, str) or isinstance(res, dict):
-            return get_connection(res)
+            return get_connection(res, timeout=timeout, connection_timeout=connection_timeout, autocommit=autocommit)
         return res
     if not isinstance(dict_dt, dict) and not isinstance(dict_dt, str):
         return dict_dt
     try:
-        import mssql_python  # type: ignore
-
-        return mssql_python.Connection(build_connection_string(dict_dt, odbc=False))
-    except ImportError:
         import pyodbc
 
-        return pyodbc.connect(build_connection_string(dict_dt, odbc=True))
+        if not pyodbc.drivers():
+            raise ImportError("No ODBC drivers available")
+        c = pyodbc.connect(
+            build_connection_string(dict_dt, odbc=True), autocommit=autocommit, timeout=connection_timeout
+        )
+        c.timeout = timeout
+        return c
+    except ImportError:
+        import mssql_python  # type: ignore
+
+        c = mssql_python.Connection(
+            build_connection_string(dict_dt, odbc=False), autocommit=autocommit, timeout=connection_timeout
+        )
+        c.timeout = timeout
+        return c
 
 
 def build_connection_string(dict_dt: dict | str, *, odbc: bool = False, odbc_driver: str | None = None):

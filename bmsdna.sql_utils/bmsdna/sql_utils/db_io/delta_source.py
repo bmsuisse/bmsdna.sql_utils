@@ -38,7 +38,6 @@ class DeltaSource(ImportSource):
         select: list[str] | None,
     ) -> WriteInfo:
         import duckdb
-        from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
         from deltalake2db import get_sql_for_delta
 
         sql = get_sql_for_delta(self.delta_lake, partition_filters, select)
@@ -62,6 +61,7 @@ class DeltaSource(ImportSource):
                         con.commit()
                 else:
                     from bmsdna.sql_utils.query import build_connection_string
+                    from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
 
                     connection_string_sql = build_connection_string(conn_str_maybe, odbc=False)
 

@@ -40,28 +40,26 @@ class SourceSpark(ImportSource):
         partition_filters: dict | None,
         select: list[str] | None,
     ) -> WriteInfo:
-        import pyarrow as pa
-
         p_df = self.df
         if partition_filters:
             from pyspark.sql.functions import col, lit
 
             for k, v in partition_filters.items():
                 p_df = p_df.filter(col(k) == lit(v))
-        from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
 
         table_str = target_table if isinstance(target_table, str) else target_table[0] + "." + target_table[1]
         conn_str_maybe = connection_string() if callable(connection_string) else connection_string
 
         if self.use_json_insert or not (isinstance(conn_str_maybe, str) or isinstance(conn_str_maybe, dict)):
             from .json_insert import insert_into_table_via_json
+            from pyspark.sql.functions import to_json, struct, col
 
-            iter = p_df.toJSON().toLocalIterator()
+            iter = p_df.select(to_json(struct(col("*")))).toLocalIterator()
 
             async def _to_batches():
                 ls = []
                 for row in iter:
-                    ls.append(row)
+                    ls.append(row[0])
                     if len(ls) > 1000:
                         yield "[" + "\n, ".join(ls) + "]"
                         ls = []
@@ -79,6 +77,9 @@ class SourceSpark(ImportSource):
                 )
                 col_names = [f.column_name for f in filtered_schema]
         else:
+            import pyarrow as pa
+            from lakeapi2sql.bulk_insert import insert_record_batch_to_sql
+
             if not p_df.isEmpty():
                 try:
                     tbl = p_df.toArrow()  # type: ignore
@@ -87,7 +88,7 @@ class SourceSpark(ImportSource):
 
                 record_batch_reader = pa.RecordBatchReader.from_batches(tbl.schema, tbl.to_batches())
                 res = await insert_record_batch_to_sql(
-                    build_connection_string(conn_str_maybe), table_str, record_batch_reader, select
+                    build_connection_string(conn_str_maybe, odbc=True), table_str, record_batch_reader, select
                 )
                 col_names = [f["name"] for f in res["fields"]]
             else:
