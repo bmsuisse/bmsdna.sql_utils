@@ -53,7 +53,7 @@ jobs:
           python -m pip install --upgrade pip
           curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install project dependencies
-        run: uv sync --extra odbc --group test --no-dev
+        run: uv sync --extra odbc --group test --no-dev --extra delta
         working-directory: bmsdna.sql_utils
       - name: Test with pytest
         run: uv run pytest  --maxfail=3 --capture=tee-sys  tests
@@ -77,7 +77,7 @@ jobs:
           python -m pip install --upgrade pip
           curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install project dependencies
-        run: uv sync --extra mssql --group test --no-dev
+        run: uv sync --extra mssql --group test --no-dev --extra delta
         working-directory: bmsdna.sql_utils
       - name: Test with pytest
         run: uv run pytest  --maxfail=3 --capture=tee-sys  tests
