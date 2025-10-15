@@ -40,7 +40,7 @@ class SourceSpark(ImportSource):
         partition_filters: dict | None,
         select: list[str] | None,
     ) -> WriteInfo:
-        import pyarrow as pa
+        
 
         p_df = self.df
         if partition_filters:
@@ -55,13 +55,13 @@ class SourceSpark(ImportSource):
 
         if self.use_json_insert or not (isinstance(conn_str_maybe, str) or isinstance(conn_str_maybe, dict)):
             from .json_insert import insert_into_table_via_json
-
-            iter = p_df.toJSON().toLocalIterator()
+            from pyspark.sql.functions import to_json, struct, col
+            iter = p_df.select(to_json(struct(col("*")))).toLocalIterator()
 
             async def _to_batches():
                 ls = []
                 for row in iter:
-                    ls.append(row)
+                    ls.append(row[0])
                     if len(ls) > 1000:
                         yield "[" + "\n, ".join(ls) + "]"
                         ls = []
@@ -79,6 +79,7 @@ class SourceSpark(ImportSource):
                 )
                 col_names = [f.column_name for f in filtered_schema]
         else:
+            import pyarrow as pa
             if not p_df.isEmpty():
                 try:
                     tbl = p_df.toArrow()  # type: ignore
