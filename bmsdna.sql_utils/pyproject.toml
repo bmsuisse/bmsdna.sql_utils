@@ -9,7 +9,7 @@ requires-python = "~=3.11"
 
 [project.optional-dependencies]
 mssql = [
-    "mssql-python>=0.11.0"]
+    "mssql-python>=0.13.1"]
 odbc = [
     "pyodbc >=5.0.1,<6",
     "aioodbc >=0.5.0",
@@ -96,4 +96,5 @@ test = [
     "faker >=25.0.0,<26",
     "deltalake >=0.19.0",
     "polars>=1.0.0",
+    "deltalake2db",
 ]
