@@ -96,5 +96,5 @@ test = [
     "faker >=25.0.0,<26",
     "deltalake >=0.19.0",
     "polars>=1.0.0",
-    "deltalake2db",
+    "duckdb>=1.0.0",
 ]

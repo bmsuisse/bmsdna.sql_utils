@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING
 from polars.testing import assert_frame_equal
 import polars as pl
 
+from bmsdna.sql_utils.query import sql_quote_value
+
 if TYPE_CHECKING:
     from bmsdna.sql_utils.db_io.source import ImportSource
     from .conftest import DB_Connection
@@ -20,7 +22,6 @@ async def execute_compare(
     from bmsdna.sql_utils.db_io.source import forbidden_cols
     import pandas as pd
     import os
-    from deltalake2db import duckdb_create_view_for_delta
     from bmsdna.sql_utils.query import sql_quote_name
 
     target_table_sql = sql_quote_name(target_table)
@@ -53,7 +54,9 @@ async def execute_compare(
         )
 
     with duckdb.connect() as con:
-        duckdb_create_view_for_delta(con, delta_path, target_table[1])
+        con.execute(
+            f"create view {sql_quote_name(target_table[1])} as select * from delta_scan({sql_quote_value(delta_path)})"
+        )
         df2 = con.execute(f"SELECT {', '.join(quoted_source_cols)} FROM {sql_quote_name(target_table[1])}").fetchdf()
     if test_data:
         _compare_dfs(df1, df2)
