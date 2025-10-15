@@ -26,7 +26,7 @@ db-io = [
 delta = [
     "duckdb",
     "deltalake >=0.16.4",
-    "deltalake2db >=1.1.2",
+    "deltalake2db <1.0.0",
 ]
 db2delta = [
     "duckdb >=1.2",
