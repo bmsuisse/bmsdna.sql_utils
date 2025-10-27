@@ -16,7 +16,7 @@ def get_connection(
     *,
     timeout: int = 0,
     connection_timeout: int = 30,
-    autocommit: bool = False,
+    autocommit: bool = True,
 ) -> "Connection":
     if callable(dict_dt):
         res = dict_dt()
