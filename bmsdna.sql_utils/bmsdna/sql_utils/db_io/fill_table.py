@@ -432,6 +432,7 @@ async def execute_merge(
     insert_into_log(conn, sql_table_name, "start_merge", partition_filter=partition_filter_str, sql=sql)
     with conn.cursor() as cur:
         cur.execute(sql)
+    conn.commit()
 
 
 def _part_tbl(part_values: Mapping):
@@ -516,6 +517,7 @@ async def _execute(
                     return
     assert schema is not None
     if part_values is not None and len(part_values) > 0:
+        logger.info(f"Starting  partitioned load into table {target_table}, partitions: {part_values}")
         table_sql: list[str] = []
         if table_per_partition:
             all_cols = CasePreservingSet(select or [f.column_name for f in schema])
@@ -588,9 +590,12 @@ async def _execute(
             with get_connection(connection_string) as conn:
                 with conn.cursor() as cur:
                     cur.execute(view)
+                conn.commit()
 
     else:
         constant_values = source.get_constant_values(None, select=select)
+
+        logger.info(f"Starting load into table {target_table}. No partitions")
 
         select = select or [f.column_name for f in schema if f.column_name not in constant_values.keys()]
         await insert_into_table_partition(

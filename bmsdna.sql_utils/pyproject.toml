@@ -1,6 +1,6 @@
 [project]
 name = "bmsdna-sql-utils"
-version = "0.14.8"
+version = "0.14.9"
 description = ""
 authors = [
     { name = "Adrian Ehrsam", email = "adrian.ehrsam@bmsuisse.ch" },
