@@ -139,6 +139,9 @@ def get_col_definition(
         sql_type = "n" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
     if sql_type.startswith("VARCHAR") or sql_type.startswith("CHAR"):
         sql_type = "N" + sql_type  # see https://github.com/tobymao/sqlglot/issues/3381
+    if sql_type.lower().startswith(("nvarchar", "nchar")):
+        # temp tables (##...) would otherwise get tempdb's collation, which breaks comparisons with the target table
+        sql_type += " COLLATE DATABASE_DEFAULT"
     definit = sql_quote_name(field.column_name) + " " + sql_type + (" NOT NULL" if not nullable else "")
     if default is not None and default.lower() != "null":
         definit += " DEFAULT (" + default + ")"
